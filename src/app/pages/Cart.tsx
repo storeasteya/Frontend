@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "../../lib/cartContext";
+import { useAuth } from "../../lib/authContext";
 import { Link, useNavigate } from "react-router";
 import { ShoppingBag, Trash2, Plus, Minus, CheckCircle, ArrowLeft, Tag, CreditCard, ShieldCheck } from "lucide-react";
 import { Header } from "../components/Header";
@@ -10,6 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, cartTotal } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Coupon state
@@ -19,8 +21,15 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState("");
 
   // Customer & Shipping Form
-  const [customerName, setCustomerName] = useState("");
-  const [email, setEmail] = useState("");
+  const [customerName, setCustomerName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+
+  useEffect(() => {
+    if (user) {
+      if (!customerName) setCustomerName(user.name);
+      if (!email) setEmail(user.email);
+    }
+  }, [user]);
   const [phone, setPhone] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingCity, setShippingCity] = useState("");

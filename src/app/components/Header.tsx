@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { motion, useScroll, useTransform } from "motion/react";
-import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User, LogOut, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useCart } from "../../lib/cartContext";
+import { useAuth } from "../../lib/authContext";
 import logo from "figma:asset/ee488f8ea6fc6504e921786a580af77a5035691f.png";
 
 function scrollToSection(id: string) {
@@ -13,7 +14,9 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartCount, toastMessage } = useCart();
+  const { user, openAuthModal, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
   const backgroundOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
@@ -98,6 +101,59 @@ export function Header() {
                   </span>
                 )}
               </motion.button>
+
+              {/* User Authentication Menu */}
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2.5 p-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full transition-colors"
+                  >
+                    {user.picture ? (
+                      <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-cyan-400" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center font-bold text-xs text-white">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="hidden sm:inline text-xs font-semibold text-white max-w-[100px] truncate">
+                      {user.name.split(' ')[0]}
+                    </span>
+                    <ChevronDown size={14} className="text-gray-400" />
+                  </button>
+
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 mt-3 w-56 p-2 bg-gradient-to-b from-gray-900 to-black border border-white/15 rounded-2xl shadow-2xl z-50">
+                      <div className="px-3 py-2 border-b border-white/10">
+                        <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={() => { setUserDropdownOpen(false); navigate('/cart'); }}
+                        className="w-full text-left px-3 py-2 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors flex items-center gap-2 mt-1"
+                      >
+                        <ShoppingBag size={14} /> My Cart & Checkout
+                      </button>
+                      <button
+                        onClick={() => { setUserDropdownOpen(false); logout(); }}
+                        className="w-full text-left px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-2 mt-1"
+                      >
+                        <LogOut size={14} /> Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={openAuthModal}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold rounded-full text-xs shadow-lg hover:brightness-110 transition-all"
+                >
+                  <User size={14} />
+                  <span>Sign In</span>
+                </motion.button>
+              )}
             </div>
           )}
 
