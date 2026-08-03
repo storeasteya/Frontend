@@ -5,7 +5,7 @@ import { CartProvider } from "../lib/cartContext";
 import { AuthProvider } from "../lib/authContext";
 import { AuthModal } from "./components/AuthModal";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1057492847591-demo-animeverse-google-auth.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "1057492847591-demo-animeverse-google-auth.apps.googleusercontent.com";
 
 export default function App() {
   return (

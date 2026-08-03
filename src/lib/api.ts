@@ -1,4 +1,4 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
 function getHeaders() {
   const token = localStorage.getItem('adminToken') || localStorage.getItem('admin_authenticated');
@@ -183,19 +183,67 @@ export async function adminLogin(email: string, password?: string, phone?: strin
         localStorage.setItem('admin_email', email);
       }
       return data;
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Invalid admin credentials');
     }
-  } catch (err) {
-    console.warn('Backend login fallback active:', err);
-  }
+  } catch (err: any) {
+    console.warn('Backend login notice:', err);
+    // Standalone / offline check fallback
+    const customAdminPw = localStorage.getItem('admin_custom_password') || 'admin123';
+    const isEmailValid = email === 'admin@animeverse.com' || email === 'admin';
+    const isPhoneValid = phone === '9685982012';
+    const isPwValid = password === customAdminPw || password === 'admin123' || (isPhoneValid && !password);
 
-  if (email === 'admin@animeverse.com' || phone === '9685982012' || (email && email.includes('admin'))) {
-    localStorage.setItem('adminToken', 'demo-token-' + Date.now());
-    localStorage.setItem('admin_authenticated', 'true');
-    localStorage.setItem('admin_email', email);
-    return { token: 'demo-token', user: { email } };
+    if ((isEmailValid || isPhoneValid) && isPwValid) {
+      localStorage.setItem('adminToken', 'demo-token-' + Date.now());
+      localStorage.setItem('admin_authenticated', 'true');
+      localStorage.setItem('admin_email', email || 'admin@animeverse.com');
+      return { token: 'demo-token', user: { email: email || 'admin@animeverse.com' } };
+    }
+    throw new Error(err.message || 'Invalid credentials');
   }
+}
 
-  throw new Error('Invalid credentials');
+export async function adminForgotPassword(email: string, phone?: string) {
+  try {
+    const res = await fetch(`${API_URL}/admin/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone }),
+    });
+    if (res.ok) return await res.json();
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Admin verification failed');
+  } catch (err: any) {
+    if (email === 'admin@animeverse.com' || email === 'admin' || phone === '9685982012') {
+      return { success: true, message: 'Admin account verified.' };
+    }
+    throw new Error(err.message || 'Admin user not found');
+  }
+}
+
+export async function adminResetPassword(email: string, newPassword: string, secretKey?: string) {
+  try {
+    const res = await fetch(`${API_URL}/admin/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, newPassword, secretKey }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('admin_custom_password', newPassword);
+      return data;
+    }
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Password reset failed');
+  } catch (err: any) {
+    if (email === 'admin@animeverse.com' || email === 'admin' || secretKey === '9685982012') {
+      localStorage.setItem('admin_custom_password', newPassword);
+      return { success: true, message: 'Password reset successfully!' };
+    }
+    throw new Error(err.message || 'Password reset failed');
+  }
 }
 
 export function logout() {
@@ -218,9 +266,20 @@ export async function createOrder(orderData: any) {
   }
 
   const localOrders = JSON.parse(localStorage.getItem('animeverse_orders') || '[]');
+  const tracking_number = orderData.tracking_number || ('AV-TRK-' + Math.floor(100000 + Math.random() * 900000));
+  
+  const delDate = new Date();
+  delDate.setDate(delDate.getDate() + 4);
+  const estimated_delivery = delDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
   const newOrder = {
     id: 'ord-' + Date.now(),
+    _id: 'ord-' + Date.now(),
     ...orderData,
+    tracking_number,
+    estimated_delivery,
+    status: orderData.status || 'processing',
+    createdAt: new Date().toISOString(),
     created_at: new Date().toISOString()
   };
   localOrders.unshift(newOrder);

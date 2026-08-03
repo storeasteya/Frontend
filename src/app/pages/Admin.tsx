@@ -8,7 +8,7 @@ import {
 import { supabase, type Product, type Coupon, type ProductReview, type WebsiteTestimonial, type SupportInfo, type ScrollingAnimation } from "../../lib/supabase";
 import { fetchProducts as apiFetchProducts, createProduct as apiCreateProduct, updateProduct as apiUpdateProduct, deleteProduct as apiDeleteProduct } from "../../lib/api";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
 type TabType = "products" | "orders" | "coupons" | "reviews" | "testimonials" | "support" | "animations";
 
@@ -510,76 +510,166 @@ export default function Admin() {
               </div>
             ) : (
               <div className="space-y-6">
-                {orders.map((order: any) => (
-                  <motion.div
-                    key={order._id || order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl space-y-4"
-                  >
-                    <div className="flex flex-wrap justify-between items-start gap-4 border-b border-white/10 pb-4">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/20">
-                            #{order._id || order.id}
-                          </span>
-                          <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase ${
-                            order.status === 'delivered' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                            order.status === 'shipped' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                          }`}>
-                            {order.status || 'Pending'}
+                {orders.map((order: any) => {
+                  const orderId = order._id || order.id;
+                  const currentStatus = order.status || 'pending';
+
+                  const statusFlow = [
+                    { key: 'pending',          label: '📋 Pending',           color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+                    { key: 'processing',       label: '✅ Accepted',          color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+                    { key: 'quality_check',    label: '🔍 Quality Check',     color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+                    { key: 'shipped',          label: '🚚 Dispatched',        color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+                    { key: 'out_for_delivery', label: '📍 Out for Delivery',  color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+                    { key: 'delivered',        label: '🎉 Delivered',         color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                  ];
+
+                  const currentIdx = statusFlow.findIndex(s => s.key === currentStatus);
+                  const displayStatus = statusFlow.find(s => s.key === currentStatus) || statusFlow[0];
+
+                  async function updateOrderStatus(newStatus: string) {
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus }),
+                      });
+                      if (res.ok) {
+                        const updated = await res.json();
+                        setOrders((prev: any[]) => prev.map(o => (o._id || o.id) === orderId ? { ...o, status: updated.status } : o));
+                      } else {
+                        throw new Error('Backend unavailable');
+                      }
+                    } catch {
+                      // LocalStorage fallback
+                      const stored: any[] = JSON.parse(localStorage.getItem('animeverse_orders') || '[]');
+                      const idx = stored.findIndex(o => (o._id || o.id) === orderId);
+                      if (idx !== -1) {
+                        stored[idx] = { ...stored[idx], status: newStatus };
+                        localStorage.setItem('animeverse_orders', JSON.stringify(stored));
+                      }
+                      setOrders((prev: any[]) => prev.map(o => (o._id || o.id) === orderId ? { ...o, status: newStatus } : o));
+                    }
+                  }
+
+                  return (
+                    <motion.div
+                      key={orderId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-6 bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl space-y-4"
+                    >
+                      {/* Header Row */}
+                      <div className="flex flex-wrap justify-between items-start gap-4 border-b border-white/10 pb-4">
+                        <div>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/20">
+                              #{orderId}
+                            </span>
+                            {order.tracking_number && (
+                              <span className="text-xs font-mono text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded border border-purple-500/20">
+                                {order.tracking_number}
+                              </span>
+                            )}
+                            <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase border ${displayStatus.color}`}>
+                              {displayStatus.label}
+                            </span>
+                          </div>
+                          <h3 className="text-xl font-bold text-white mt-2">{order.customer_name || 'Anonymous Customer'}</h3>
+                          <p className="text-sm text-gray-400">{order.email} | {order.phone}</p>
+                          {order.estimated_delivery && (
+                            <p className="text-xs text-cyan-400 mt-1">🗓 Est. Delivery: {order.estimated_delivery}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-400 block">Total Paid</span>
+                          <span className="text-2xl font-black text-white">₹{order.total_amount || order.total || 0}</span>
+                          <span className="text-xs font-semibold text-emerald-400 block mt-1">
+                            Payment: {order.payment_method || 'UPI'}
                           </span>
                         </div>
-                        <h3 className="text-xl font-bold text-white mt-2">{order.customer_name || 'Anonymous Customer'}</h3>
-                        <p className="text-sm text-gray-400">{order.email} | {order.phone}</p>
                       </div>
 
-                      <div className="text-right">
-                        <span className="text-xs text-gray-400 block">Total Paid</span>
-                        <span className="text-2xl font-black text-white">₹{order.total_amount || order.total || 0}</span>
-                        <span className="text-xs font-semibold text-emerald-400 block mt-1">
-                          Payment: {order.payment_method || 'UPI'}
-                        </span>
+                      {/* Addresses */}
+                      <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
+                        <div className="bg-black/30 p-3.5 rounded-xl border border-white/5">
+                          <span className="text-xs font-bold text-gray-400 block mb-1">Shipping Address:</span>
+                          <p className="font-medium">{order.shipping_address || 'N/A'}</p>
+                        </div>
+                        <div className="bg-black/30 p-3.5 rounded-xl border border-white/5">
+                          <span className="text-xs font-bold text-gray-400 block mb-1">Billing Address:</span>
+                          <p className="font-medium">{order.billing_address || order.shipping_address || 'Same as shipping'}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
-                      <div className="bg-black/30 p-3.5 rounded-xl border border-white/5">
-                        <span className="text-xs font-bold text-gray-400 block mb-1">Shipping Address:</span>
-                        <p className="font-medium">{order.shipping_address || order.customer_info?.address || 'N/A'}</p>
-                      </div>
-                      <div className="bg-black/30 p-3.5 rounded-xl border border-white/5">
-                        <span className="text-xs font-bold text-gray-400 block mb-1">Billing Address:</span>
-                        <p className="font-medium">{order.billing_address || order.shipping_address || 'Same as shipping'}</p>
-                      </div>
-                    </div>
-
-                    {/* Items List */}
-                    <div>
-                      <span className="text-xs font-bold text-gray-400 block mb-2 uppercase tracking-wider">Ordered Items:</span>
-                      <div className="space-y-2">
-                        {(order.items || []).map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center bg-white/5 px-4 py-2.5 rounded-xl text-sm border border-white/5">
-                            <div>
-                              <span className="font-bold text-white">{item.product_name || `Product ID: ${item.product_id}`}</span>
-                              <span className="ml-2 text-xs font-semibold px-2 py-0.5 bg-white/10 rounded text-cyan-300">
-                                Size: {item.size}
-                              </span>
+                      {/* Items */}
+                      <div>
+                        <span className="text-xs font-bold text-gray-400 block mb-2 uppercase tracking-wider">Ordered Items:</span>
+                        <div className="space-y-2">
+                          {(order.items || []).map((item: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center bg-white/5 px-4 py-2.5 rounded-xl text-sm border border-white/5">
+                              <div>
+                                <span className="font-bold text-white">{item.product_name || `Product ID: ${item.product_id}`}</span>
+                                <span className="ml-2 text-xs font-semibold px-2 py-0.5 bg-white/10 rounded text-cyan-300">
+                                  Size: {item.size}
+                                </span>
+                              </div>
+                              <div className="font-semibold text-gray-300">
+                                Qty: {item.quantity} × ₹{item.price} = <span className="text-white font-bold">₹{item.quantity * item.price}</span>
+                              </div>
                             </div>
-                            <div className="font-semibold text-gray-300">
-                              Qty: {item.quantity} × ₹{item.price} = <span className="text-white font-bold">₹{item.quantity * item.price}</span>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+
+                      {/* Status Control Panel */}
+                      <div className="bg-black/40 rounded-xl border border-white/10 p-4">
+                        <span className="text-xs font-bold text-gray-400 block mb-3 uppercase tracking-wider">📦 Update Order Status:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {statusFlow.map((step, idx) => {
+                            const isCurrent = step.key === currentStatus;
+                            const isPast = idx < currentIdx;
+                            const isNext = idx === currentIdx + 1;
+                            return (
+                              <motion.button
+                                key={step.key}
+                                whileHover={!isCurrent ? { scale: 1.05 } : {}}
+                                whileTap={!isCurrent ? { scale: 0.95 } : {}}
+                                onClick={() => !isCurrent && updateOrderStatus(step.key)}
+                                disabled={isCurrent}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all
+                                  ${isCurrent
+                                    ? `${step.color} cursor-default ring-2 ring-white/30`
+                                    : isNext
+                                    ? 'bg-white text-black border-white hover:bg-gray-100 cursor-pointer'
+                                    : isPast
+                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 cursor-pointer opacity-60'
+                                    : 'bg-white/5 text-gray-500 border-white/10 cursor-pointer hover:bg-white/10'
+                                  }`}
+                              >
+                                {isCurrent ? `▶ ${step.label}` : isNext ? `→ Move to ${step.label}` : step.label}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                        {currentStatus === 'pending' && (
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => updateOrderStatus('processing')}
+                            className="mt-3 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-bold rounded-xl text-sm hover:brightness-110 transition-all"
+                          >
+                            ✅ Accept & Confirm Order
+                          </motion.button>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
           </div>
         )}
+
 
         {/* COUPONS TAB */}
         {activeTab === "coupons" && (

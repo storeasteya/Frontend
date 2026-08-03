@@ -1,11 +1,13 @@
 import { motion } from "motion/react";
 import { Twitter, Instagram, Youtube, Facebook } from "lucide-react";
+import { useNavigate } from "react-router";
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 export function Footer() {
+  const navigate = useNavigate();
   const socialLinks = [
     { icon: Twitter, href: "#", label: "Twitter" },
     { icon: Instagram, href: "#", label: "Instagram" },
@@ -25,6 +27,7 @@ export function Footer() {
       { label: "Payment Methods", section: "reviews" },
     ],
     Support: [
+      { label: "Track Package", section: "track" },
       { label: "Contact Us", section: "support" },
       { label: "FAQs", section: "support" },
       { label: "Returns & Exchange", section: "policies" },
@@ -65,7 +68,13 @@ export function Footer() {
                 {links.map((link) => (
                   <li key={link.label}>
                     <button
-                      onClick={() => scrollTo(link.section)}
+                      onClick={() => {
+                        if (link.section === "track") {
+                          navigate("/track");
+                        } else {
+                          scrollTo(link.section);
+                        }
+                      }}
                       className="text-gray-400 hover:text-white transition-colors text-left"
                     >
                       {link.label}
@@ -78,7 +87,34 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-sm">© 2026 ASTEYA. All rights reserved.</p>
+          <div className="flex items-center gap-1">
+            <p
+              onClick={() => {
+                // Secret Triple Click to open Admin Login
+                if ((window as any).__adminClickCount = ((window as any).__adminClickCount || 0) + 1) {
+                  if ((window as any).__adminClickCount >= 3) {
+                    (window as any).__adminClickCount = 0;
+                    navigate('/admin-login');
+                  }
+                  setTimeout(() => { (window as any).__adminClickCount = 0; }, 2000);
+                }
+              }}
+              className="text-gray-500 text-sm cursor-default select-none hover:text-gray-400 transition-colors"
+              title="ASTEYA"
+            >
+              © 2026 ASTEYA. All rights reserved.
+            </p>
+            {/* Secret hidden dot */}
+            <button
+              onClick={() => navigate('/admin-login')}
+              className="text-gray-950 hover:text-gray-700 text-xs px-1 focus:outline-none transition-colors"
+              aria-label="Admin Access"
+              title="Admin Portal"
+            >
+              •
+            </button>
+          </div>
+
           <div className="flex gap-8 text-sm">
             <button onClick={() => scrollTo("policies")} className="text-gray-500 hover:text-white transition-colors">
               Privacy Policy

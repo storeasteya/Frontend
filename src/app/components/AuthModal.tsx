@@ -1,44 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, ShieldCheck } from 'lucide-react';
+import { X, Sparkles, ShieldCheck, Eye, EyeOff, AlertCircle, Loader2, Lock, Mail, User } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../lib/authContext';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, closeAuthModal, loginWithGoogleCredential, loginWithCustomUser } = useAuth();
-  const [emailInput, setEmailInput] = React.useState('');
-  const [nameInput, setNameInput] = React.useState('');
-  const [isSignUp, setIsSignUp] = React.useState(false);
+  const {
+    isAuthModalOpen,
+    closeAuthModal,
+    loginWithGoogleCredential,
+    loginWithEmail,
+    registerWithEmail,
+    isLoading,
+    authError,
+    clearAuthError,
+  } = useAuth();
+
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   if (!isAuthModalOpen) return null;
 
-  const handleDemoGoogleSignIn = () => {
-    loginWithCustomUser({
-      name: 'Alex Mercer',
-      email: 'alex.mercer@gmail.com',
-      picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      provider: 'google',
-    });
+  const handleToggleMode = (signUp: boolean) => {
+    setIsSignUp(signUp);
+    setLocalError(null);
+    clearAuthError();
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailInput) return;
-    loginWithCustomUser({
-      name: nameInput || emailInput.split('@')[0],
-      email: emailInput,
-      provider: 'email',
-    });
+    setLocalError(null);
+    clearAuthError();
+
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setLocalError('Please fill in all required fields.');
+      return;
+    }
+
+    if (passwordInput.length < 6) {
+      setLocalError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (isSignUp) {
+      if (!nameInput.trim()) {
+        setLocalError('Please enter your full name.');
+        return;
+      }
+      await registerWithEmail(nameInput, emailInput, passwordInput);
+    } else {
+      await loginWithEmail(emailInput, passwordInput);
+    }
   };
+
+  const activeError = localError || authError;
 
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-md p-8 overflow-hidden bg-gradient-to-b from-gray-900 via-black to-gray-950 border border-white/15 rounded-3xl shadow-2xl"
+          exit={{ opacity: 0, scale: 0.92, y: 20 }}
+          className="relative w-full max-w-md p-6 sm:p-8 overflow-hidden bg-gradient-to-b from-gray-900 via-black to-gray-950 border border-white/15 rounded-3xl shadow-2xl"
         >
           {/* Neon Background Accents */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-purple-600/30 rounded-full blur-3xl pointer-events-none" />
@@ -53,122 +81,157 @@ export const AuthModal: React.FC = () => {
           </button>
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center p-3 mb-4 bg-gradient-to-tr from-purple-500/20 to-cyan-500/20 border border-white/10 rounded-2xl">
-              <Sparkles className="w-8 h-8 text-cyan-400" />
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center p-3 mb-3 bg-gradient-to-tr from-purple-500/20 to-cyan-500/20 border border-white/10 rounded-2xl">
+              <Sparkles className="w-7 h-7 text-cyan-400" />
             </div>
-            <h2 className="text-3xl font-black tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
               {isSignUp ? 'Join AnimeVerse' : 'Welcome Back'}
             </h2>
-            <p className="mt-2 text-sm text-gray-400">
-              Sign in with Google for 1-click checkout and exclusive drop access
+            <p className="mt-1.5 text-xs sm:text-sm text-gray-400">
+              {isSignUp
+                ? 'Create an account for 1-click checkout and exclusive drop access'
+                : 'Sign in to access your saved wishlist, orders, and exclusive drops'}
             </p>
           </div>
 
-          {/* Google Sign In Section */}
-          <div className="space-y-4">
-            <div className="flex justify-center w-full">
-              <GoogleLogin
-                onSuccess={(credentialResponse) => {
-                  if (credentialResponse.credential) {
-                    loginWithGoogleCredential(credentialResponse.credential);
-                  }
-                }}
-                onError={() => {
-                  console.warn('Google Auth Popup closed or failed');
-                }}
-                theme="filled_black"
-                shape="pill"
-                size="large"
-                width="100%"
-                text={isSignUp ? 'signup_with' : 'signin_with'}
-              />
-            </div>
-
-            {/* Quick Demo Google Sign In Fallback Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleDemoGoogleSignIn}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-black font-bold rounded-full shadow-lg hover:bg-gray-100 transition-all text-sm"
+          {/* Error Alert Banner */}
+          {activeError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400 text-xs sm:text-sm"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29B11.86 8.89 10.5 12 10.5s-1.64 1.36-3.21 3.77l3.99 3.01z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.01c.95-2.83 3.6-4.85 6.72-4.85z"
-                />
-              </svg>
-              <span>Continue with Google (Demo User)</span>
-            </motion.button>
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <div className="flex-1 font-medium">{activeError}</div>
+            </motion.div>
+          )}
+
+          {/* Real Google Sign In Section */}
+          <div className="w-full flex justify-center py-1">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (credentialResponse.credential) {
+                  loginWithGoogleCredential(credentialResponse.credential);
+                }
+              }}
+              onError={() => {
+                console.warn('Google Auth Popup closed or failed');
+              }}
+              theme="filled_black"
+              shape="pill"
+              size="large"
+              width="360"
+              text={isSignUp ? 'signup_with' : 'signin_with'}
+            />
           </div>
 
-          <div className="relative my-6 text-center">
+          {/* Separator */}
+          <div className="relative my-5 text-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/10" />
             </div>
-            <span className="relative px-4 text-xs font-semibold text-gray-500 uppercase tracking-widest bg-black">
+            <span className="relative px-3 text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-widest bg-gray-950">
               or continue with email
             </span>
           </div>
 
-          {/* Email Form */}
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
+          {/* Email & Password Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div>
-                <label className="block mb-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <label className="block mb-1.5 text-[11px] font-bold text-gray-300 uppercase tracking-wider">
                   Your Name
                 </label>
-                <input
-                  type="text"
-                  placeholder="Sung Jinwoo"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 text-sm"
-                />
+                <div className="relative">
+                  <User size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                  <input
+                    type="text"
+                    required={isSignUp}
+                    placeholder="Sung Jinwoo"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm transition-all"
+                  />
+                </div>
               </div>
             )}
 
             <div>
-              <label className="block mb-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <label className="block mb-1.5 text-[11px] font-bold text-gray-300 uppercase tracking-wider">
                 Email Address
               </label>
-              <input
-                type="email"
-                required
-                placeholder="otaku@animeverse.com"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 text-sm"
-              />
+              <div className="relative">
+                <Mail size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                <input
+                  type="email"
+                  required
+                  placeholder="otaku@animeverse.com"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-[11px] font-bold text-gray-300 uppercase tracking-wider">
+                  Password
+                </label>
+                {!isSignUp && (
+                  <span className="text-[11px] text-cyan-400 hover:underline cursor-pointer">
+                    Forgot password?
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {isSignUp && (
+                <p className="mt-1 text-[11px] text-gray-400">Must be at least 6 characters long</p>
+              )}
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: isLoading ? 1 : 1.01 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
+              disabled={isLoading}
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold rounded-xl shadow-lg hover:brightness-110 transition-all text-sm mt-2"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 text-white font-bold rounded-xl shadow-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm mt-3"
             >
-              {isSignUp ? 'Create Account' : 'Sign In with Email'}
+              {isLoading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>{isSignUp ? 'Creating Account...' : 'Signing In...'}</span>
+                </>
+              ) : (
+                <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
+              )}
             </motion.button>
           </form>
 
           {/* Toggle Sign Up / Sign In */}
-          <div className="mt-6 text-center text-xs text-gray-400">
+          <div className="mt-5 text-center text-xs text-gray-400">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              type="button"
+              onClick={() => handleToggleMode(!isSignUp)}
               className="font-bold text-cyan-400 hover:underline ml-1"
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
@@ -176,7 +239,7 @@ export const AuthModal: React.FC = () => {
           </div>
 
           {/* Trust Badge */}
-          <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-center gap-2 text-xs text-gray-500">
+          <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-center gap-2 text-[11px] text-gray-500">
             <ShieldCheck size={14} className="text-emerald-400" />
             <span>Secure 256-bit encrypted authentication</span>
           </div>

@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "../../lib/cartContext";
 import { useAuth } from "../../lib/authContext";
 import { Link, useNavigate } from "react-router";
-import { ShoppingBag, Trash2, Plus, Minus, CheckCircle, ArrowLeft, Tag, CreditCard, ShieldCheck } from "lucide-react";
+import { ShoppingBag, Trash2, Plus, Minus, CheckCircle, ArrowLeft, Tag, CreditCard, ShieldCheck, Truck } from "lucide-react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, cartTotal } = useCart();
@@ -168,12 +168,22 @@ export default function CartPage() {
               </div>
             </div>
 
-            <button
-              onClick={() => navigate('/')}
-              className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:bg-gray-200 transition-all shadow-xl"
-            >
-              Back to Storefront
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => navigate(`/track?id=${encodeURIComponent(orderSuccess.tracking_number || orderSuccess._id || orderSuccess.id)}`)}
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 text-white rounded-full font-bold text-lg hover:brightness-110 transition-all shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2"
+              >
+                <Truck size={20} />
+                <span>Track Your Package</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/')}
+                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold text-lg transition-all"
+              >
+                Back to Storefront
+              </button>
+            </div>
           </motion.div>
         ) : cart.length === 0 ? (
           <div className="text-center py-20 max-w-md mx-auto">
