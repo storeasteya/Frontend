@@ -9,6 +9,7 @@ export const AuthModal: React.FC = () => {
     isAuthModalOpen,
     closeAuthModal,
     loginWithGoogleCredential,
+    loginWithCustomUser,
     loginWithEmail,
     registerWithEmail,
     isLoading,
@@ -86,7 +87,7 @@ export const AuthModal: React.FC = () => {
               <Sparkles className="w-7 h-7 text-cyan-400" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              {isSignUp ? 'Join AnimeVerse' : 'Welcome Back'}
+              {isSignUp ? 'Join ASTEYA' : 'Welcome Back'}
             </h2>
             <p className="mt-1.5 text-xs sm:text-sm text-gray-400">
               {isSignUp
@@ -108,7 +109,7 @@ export const AuthModal: React.FC = () => {
           )}
 
           {/* Real Google Sign In Section */}
-          <div className="w-full flex justify-center py-1">
+          <div className="w-full flex flex-col items-center justify-center py-1">
             <GoogleLogin
               onSuccess={(credentialResponse) => {
                 if (credentialResponse.credential) {
@@ -116,7 +117,7 @@ export const AuthModal: React.FC = () => {
                 }
               }}
               onError={() => {
-                console.warn('Google Auth Popup closed or failed');
+                setLocalError('Google Auth is blocked on localhost. Please ensure your Google Client ID is configured correctly.');
               }}
               theme="filled_black"
               shape="pill"
@@ -148,7 +149,7 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="text"
                     required={isSignUp}
-                    placeholder="Sung Jinwoo"
+                    placeholder="Enter your name"
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm transition-all"
@@ -166,7 +167,7 @@ export const AuthModal: React.FC = () => {
                 <input
                   type="email"
                   required
-                  placeholder="otaku@animeverse.com"
+                  placeholder="Enter your email"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm transition-all"
@@ -190,7 +191,7 @@ export const AuthModal: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm transition-all"

@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react'
 function figmaAssetResolver() {
   return {
     name: 'figma-asset-resolver',
-    resolveId(id) {
+    resolveId(id: string) {
       if (id.startsWith('figma:asset/')) {
         const filename = id.replace('figma:asset/', '')
         return path.resolve(__dirname, 'src/assets', filename)
@@ -29,6 +29,18 @@ export default defineConfig({
       // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
+  },
+
+  server: {
+    host: true,
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.

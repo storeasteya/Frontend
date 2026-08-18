@@ -12,7 +12,7 @@ export function TshirtShelf({ products, title = "T-Shirt Shelf", subtitle = "Fea
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="py-16 bg-black relative overflow-hidden">
+    <section className="py-16 bg-transparent relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="mb-10 text-center sm:text-left">
           <motion.span

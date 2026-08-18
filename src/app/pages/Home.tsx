@@ -89,10 +89,11 @@ export default function Home() {
   };
 
   const faqs = [
-    { q: "What sizes are available?", a: "All our t-shirts come in S, M, L, XL, and XXL. Check the size chart on each product for exact measurements." },
-    { q: "How do I record the unboxing video?", a: "Before opening your package, start recording a video showing the sealed parcel, then open it while recording. This is required for all return/exchange requests." },
-    { q: "Can I get a refund if I don't like the design?", a: "Refunds are only available for damaged products with unboxing video proof. For size/color issues, a free exchange is available within 14 days." },
-    { q: "How long does delivery take?", a: "Standard delivery is 5-7 business days across India. A tracking number is sent once your order ships." },
+    { q: "What is ASTEYA's brand story & mission?", a: "ASTEYA was created by anime fans for anime fans. We design high quality graphic merchandise so you can wear your anime spirit proudly every day." },
+    { q: "What materials and printing techniques do you use?", a: "We use 100% heavyweight ringspun cotton with high-definition DTF printing to ensure our t-shirts are ultra-durable, comfortable, and pre-shrunk." },
+    { q: "What sizes are available?", a: "All our t-shirts come in S, M, L, XL, and XXL. Check the size selector on each product card for available fits." },
+    { q: "What is the 7 Days Return & Exchange Policy?", a: "We offer an easy 7 Days Return & Exchange policy. If you receive a damaged product or need a different size, submit a request within 7 days of delivery." },
+    { q: "How long does delivery take?", a: "Express shipping delivers your order in 3-5 business days across India. Live order tracking is available on our website." },
     { q: "What payment methods are accepted?", a: "We accept UPI (PhonePe, Google Pay, Paytm), Credit/Debit Cards, and Cash on Delivery (COD). All prices are in ₹ INR." },
   ];
 
@@ -112,9 +113,25 @@ export default function Home() {
       {/* ─── SECTION 1 — HERO ─── */}
       <section id="hero" ref={heroRef} className="relative h-screen overflow-hidden" style={{ position: "relative" }}>
         <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroImage})` }} />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster={heroImage}
+            className="absolute inset-0 w-full h-full object-cover opacity-55 pointer-events-none"
+          >
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-futuristic-technology-hexagons-moving-41551-large.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-black" />
         </motion.div>
+
+        {/* Smaller, clean ASTEYA background watermark */}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none z-[1]">
+          <span className="text-5xl sm:text-7xl md:text-8xl font-black text-white/10 tracking-[0.25em] uppercase font-display">
+            ASTEYA
+          </span>
+        </div>
 
         <motion.div
           className="absolute inset-0 z-[1]"
@@ -132,13 +149,13 @@ export default function Home() {
               className="max-w-5xl"
             >
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mb-6 md:mb-8">
-                <span className="inline-block px-4 py-2 sm:px-8 sm:py-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full text-white font-semibold tracking-widest uppercase text-xs sm:text-sm">
-                  Premium Anime T-Shirts — ASTEYA
+                <span className="inline-block px-5 py-2.5 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full text-cyan-400 font-bold tracking-widest uppercase text-xs sm:text-sm shadow-lg">
+                  Wear your anime spirit — ASTEYA
                 </span>
               </motion.div>
 
               <motion.h1
-                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white mb-6 leading-tight md:leading-none tracking-tighter break-words"
+                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white mb-8 leading-tight md:leading-none tracking-tighter break-words font-display glass-heading"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -147,25 +164,21 @@ export default function Home() {
                 Wear Your<br />Anime Pride
               </motion.h1>
 
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.6 }} className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 sm:mb-12 max-w-3xl font-light leading-relaxed">
-                Premium quality t-shirts featuring Solo Leveling, Dragon Ball Z, Demon Slayer, and more.
-              </motion.p>
-
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.8 }} className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6">
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }} className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6">
                 <motion.button
                   onClick={() => scrollTo("shop")}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group px-8 sm:px-12 py-4 sm:py-6 bg-white text-black rounded-full text-base sm:text-lg font-bold flex items-center justify-center gap-3 hover:bg-gray-100 transition-all shadow-2xl hover:shadow-white/30"
+                  className="group px-8 sm:px-12 py-4 sm:py-6 bg-white text-black rounded-full text-base sm:text-lg font-bold flex items-center justify-center gap-3 hover:bg-gray-100 transition-all shadow-2xl hover:shadow-white/30 min-h-[44px]"
                 >
                   Shop Collection
                   <ArrowRight className="group-hover:translate-x-2 transition-transform" size={24} />
                 </motion.button>
                 <motion.button
-                  onClick={() => scrollTo("about")}
+                  onClick={() => navigate("/about")}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-12 py-6 bg-transparent border-2 border-white/50 text-white rounded-full text-lg font-bold hover:bg-white/10 hover:border-white transition-all backdrop-blur-sm"
+                  className="px-12 py-6 bg-transparent border-2 border-white/50 text-white rounded-full text-lg font-bold hover:bg-white/10 hover:border-white transition-all backdrop-blur-sm min-h-[44px]"
                 >
                   Learn More
                 </motion.button>
@@ -206,7 +219,7 @@ export default function Home() {
             <span className="inline-block px-6 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-bold tracking-widest uppercase mb-6">
               Shop Collection
             </span>
-            <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter">Featured Products</h2>
+            <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter font-display glass-heading">Featured Products</h2>
             <p className="text-xl text-gray-400">Swipe to explore our exclusive anime t-shirt collection</p>
           </motion.div>
 
@@ -367,9 +380,9 @@ export default function Home() {
           </motion.div>
           <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {[
-              { icon: Shield, title: "Premium Quality", desc: "240 GSM ringspun cotton, durable prints" },
-              { icon: Truck, title: "Fast Shipping", desc: "Delivered within 5-7 business days" },
-              { icon: RotateCcw, title: "14-Day Policy", desc: "Exchange or refund with video proof" },
+              { icon: Shield, title: "Authentic Designs", desc: "100% heavyweight cotton, high-definition prints" },
+              { icon: Truck, title: "Fast Shipping", desc: "Delivered within 3-5 business days" },
+              { icon: RotateCcw, title: "7-Day Return Policy", desc: "Easy exchange or return request within 7 days" },
               { icon: Star, title: "Verified Reviews", desc: "Real customer feedback only" },
             ].map((f, i) => (
               <motion.div
@@ -398,7 +411,7 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-20">
             <span className="inline-block px-6 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-bold tracking-widest uppercase mb-6">Our Story</span>
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-6">About ASTEYA</h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">Your trusted destination for premium anime merchandise.</p>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">Your trusted destination for heavyweight anime merchandise.</p>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid md:grid-cols-2 gap-20 items-center mb-24">
@@ -407,7 +420,7 @@ export default function Home() {
             </div>
             <div className="space-y-6 text-lg text-gray-300 leading-relaxed">
               <p>We understand the passion you have for your favorite characters and series. ASTEYA was born from that same love.</p>
-              <p>We specialize in high-quality t-shirts featuring iconic anime series like Solo Leveling, Dragon Ball Z, and Demon Slayer — every design carefully crafted and printed on premium cotton.</p>
+              <p>We specialize in high-quality t-shirts featuring iconic anime series like Solo Leveling, Dragon Ball Z, and Demon Slayer — every design carefully crafted and printed on heavyweight cotton.</p>
               <p>Our mission: give you merchandise you'll love wearing, backed by a safe and trustworthy shopping experience.</p>
             </div>
           </motion.div>
@@ -425,7 +438,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
               { icon: Video, title: "Video Proof Required", desc: "To protect both you and us from scams, customers must record a video before opening the parcel. This ensures full transparency and faster claim processing." },
-              { icon: Package, title: "14-Day Return Policy", desc: "Damaged item? Full refund with unboxing video proof. Wrong size or color? Free exchange within 14 days. No refunds for non-damaged items or change of mind." },
+              { icon: Package, title: "7-Day Return & Exchange", desc: "Damaged item? Full refund with unboxing video proof. Need a different size or color? Free exchange within 7 days of delivery." },
               { icon: Shield, title: "Secure Packaging", desc: "Every order is carefully packed and sealed. We take every measure to ensure your t-shirt arrives in perfect condition." },
             ].map((item, i) => (
               <motion.div
@@ -507,7 +520,7 @@ export default function Home() {
               <div>
                 <h3 className="text-2xl font-bold mb-6 flex items-center gap-3"><span className="text-3xl">📦</span> Shipping Info</h3>
                 <ul className="space-y-3 text-gray-300">
-                  {["Delivery: 5-7 business days", "Ships across India", "Free shipping on orders above ₹999"].map((m) => (
+                  {["Delivery: 3-5 business days", "Ships across India", "Free shipping on orders above ₹999"].map((m) => (
                     <li key={m} className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-white rounded-full flex-shrink-0" />
                       {m}

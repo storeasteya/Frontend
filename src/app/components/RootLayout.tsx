@@ -1,7 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { GlowingCursor } from "./GlowingCursor";
 import { ScrollingTshirt } from "./ScrollingTshirt";
 import { SetupBanner } from "./SetupBanner";
 import { motion, AnimatePresence } from "motion/react";
@@ -30,9 +29,8 @@ export function RootLayout() {
   }, [navigate]);
 
   return (
-    <div className={`relative min-h-screen bg-black text-white overflow-x-hidden ${isDesktop ? 'cursor-none' : ''}`}>
+    <div className="relative min-h-screen bg-black text-white overflow-x-hidden">
       <SetupBanner />
-      <GlowingCursor />
       <ScrollingTshirt />
       <Header />
       <AnimatePresence mode="wait">

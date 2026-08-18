@@ -15,22 +15,22 @@ export function Footer() {
     { icon: Facebook, href: "#", label: "Facebook" },
   ];
 
-  const footerLinks: Record<string, { label: string; section: string }[]> = {
+  const footerLinks: Record<string, { label: string; path?: string; section?: string }[]> = {
     Shop: [
       { label: "T-Shirts", section: "shop" },
       { label: "New Arrivals", section: "shop" },
       { label: "Collections", section: "shop" },
     ],
     Company: [
-      { label: "About Us", section: "about" },
-      { label: "Our Policies", section: "policies" },
-      { label: "Payment Methods", section: "reviews" },
+      { label: "About Us", path: "/about" },
+      { label: "Privacy Policy", path: "/privacy" },
+      { label: "Terms of Service", path: "/terms" },
     ],
     Support: [
-      { label: "Track Package", section: "track" },
-      { label: "Contact Us", section: "support" },
-      { label: "FAQs", section: "support" },
-      { label: "Returns & Exchange", section: "policies" },
+      { label: "Track Order & Live Tracking", path: "/track" },
+      { label: "Contact Us", path: "/contact" },
+      { label: "7 Days Return Policy", path: "/shipping-policy" },
+      { label: "3-5 Days Delivery Info", path: "/shipping-policy" },
     ],
   };
 
@@ -40,9 +40,9 @@ export function Footer() {
         <div className="grid md:grid-cols-5 gap-12 mb-16">
           {/* Brand */}
           <div className="md:col-span-2">
-            <h3 className="text-4xl font-black mb-6 tracking-tighter">ASTEYA</h3>
-            <p className="text-gray-400 mb-8 leading-relaxed max-w-md">
-              Premium anime t-shirts for fans who love Solo Leveling, Dragon Ball Z, Demon Slayer, and more.
+            <h3 className="text-4xl font-black font-display mb-6 tracking-tighter glass-heading">ASTEYA</h3>
+            <p className="text-gray-400 mb-8 leading-relaxed max-w-md text-sm sm:text-base">
+              Heavyweight anime graphic t-shirts. 3-5 Days Express Delivery with 7 Days Easy Returns &amp; Exchange.
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
@@ -51,7 +51,7 @@ export function Footer() {
                   href={social.href}
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.9 }}
-                  className="w-12 h-12 rounded-full bg-white/10 hover:bg-white hover:text-black transition-colors flex items-center justify-center border border-white/10"
+                  className="w-12 h-12 rounded-full bg-white/10 hover:bg-white hover:text-black transition-colors flex items-center justify-center border border-white/10 min-h-[44px] min-w-[44px]"
                   aria-label={social.label}
                 >
                   <social.icon size={20} />
@@ -63,19 +63,24 @@ export function Footer() {
           {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="font-bold mb-6 text-lg">{category}</h4>
+              <h4 className="font-bold font-display mb-6 text-lg">{category}</h4>
               <ul className="space-y-4">
                 {links.map((link) => (
                   <li key={link.label}>
                     <button
                       onClick={() => {
-                        if (link.section === "track") {
-                          navigate("/track");
-                        } else {
-                          scrollTo(link.section);
+                        if (link.path) {
+                          navigate(link.path);
+                        } else if (link.section) {
+                          if (window.location.pathname !== "/") {
+                            navigate("/");
+                            setTimeout(() => scrollTo(link.section!), 300);
+                          } else {
+                            scrollTo(link.section);
+                          }
                         }
                       }}
-                      className="text-gray-400 hover:text-white transition-colors text-left"
+                      className="text-gray-400 hover:text-white transition-colors text-left text-sm py-1"
                     >
                       {link.label}
                     </button>
@@ -90,7 +95,6 @@ export function Footer() {
           <div className="flex items-center gap-1">
             <p
               onClick={() => {
-                // Secret Triple Click to open Admin Login
                 if ((window as any).__adminClickCount = ((window as any).__adminClickCount || 0) + 1) {
                   if ((window as any).__adminClickCount >= 3) {
                     (window as any).__adminClickCount = 0;
@@ -99,12 +103,11 @@ export function Footer() {
                   setTimeout(() => { (window as any).__adminClickCount = 0; }, 2000);
                 }
               }}
-              className="text-gray-500 text-sm cursor-default select-none hover:text-gray-400 transition-colors"
+              className="text-gray-500 text-xs sm:text-sm cursor-default select-none hover:text-gray-400 transition-colors"
               title="ASTEYA"
             >
               © 2026 ASTEYA. All rights reserved.
             </p>
-            {/* Secret hidden dot */}
             <button
               onClick={() => navigate('/admin-login')}
               className="text-gray-950 hover:text-gray-700 text-xs px-1 focus:outline-none transition-colors"
@@ -115,12 +118,15 @@ export function Footer() {
             </button>
           </div>
 
-          <div className="flex gap-8 text-sm">
-            <button onClick={() => scrollTo("policies")} className="text-gray-500 hover:text-white transition-colors">
+          <div className="flex flex-wrap gap-6 text-xs sm:text-sm">
+            <button onClick={() => navigate("/privacy")} className="text-gray-500 hover:text-white transition-colors">
               Privacy Policy
             </button>
-            <button onClick={() => scrollTo("policies")} className="text-gray-500 hover:text-white transition-colors">
+            <button onClick={() => navigate("/terms")} className="text-gray-500 hover:text-white transition-colors">
               Terms of Service
+            </button>
+            <button onClick={() => navigate("/shipping-policy")} className="text-gray-500 hover:text-white transition-colors">
+              Refund &amp; Shipping
             </button>
           </div>
         </div>

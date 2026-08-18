@@ -31,24 +31,35 @@ export function Header() {
   const navLinks = [
     { label: "Home", section: "hero" },
     { label: "Shop", section: "shop" },
-    { label: "About", section: "about" },
-    { label: "Policies", section: "policies" },
+    { label: "About", path: "/about" },
+    { label: "Contact", path: "/contact" },
     { label: "Support", section: "support" },
   ];
 
-  function handleNavClick(section: string) {
+  function handleNavClick(target: { section?: string; path?: string } | string) {
     setMobileMenuOpen(false);
-    if (location.pathname !== "/") {
-      navigate("/");
-      setTimeout(() => scrollToSection(section), 350);
-    } else {
-      scrollToSection(section);
+    if (typeof target === "string") {
+      if (location.pathname !== "/") {
+        navigate("/");
+        setTimeout(() => scrollToSection(target), 350);
+      } else {
+        scrollToSection(target);
+      }
+    } else if (target.path) {
+      navigate(target.path);
+    } else if (target.section) {
+      if (location.pathname !== "/") {
+        navigate("/");
+        setTimeout(() => scrollToSection(target.section!), 350);
+      } else {
+        scrollToSection(target.section);
+      }
     }
   }
 
   const bgClass = isScrolled || isAdminPage
-    ? "bg-black/95 backdrop-blur-md shadow-lg"
-    : "bg-transparent";
+    ? "bg-black/90 backdrop-blur-md shadow-lg"
+    : "bg-transparent backdrop-blur-none";
 
   return (
     <motion.header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-white/10 ${bgClass}`}>
@@ -58,12 +69,12 @@ export function Header() {
         </div>
       )}
       <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between py-5">
+        <div className="flex items-center justify-between py-4">
 
           {/* Logo */}
           <button onClick={() => handleNavClick("hero")} className="focus:outline-none">
             <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3">
-              <img src={logo} alt="ASTEYA" className="h-12 w-auto" />
+              <img src={logo} alt="ASTEYA" className="h-8 w-auto" />
             </motion.div>
           </button>
 
@@ -72,22 +83,14 @@ export function Header() {
             <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
               {navLinks.map((link) => (
                 <motion.button
-                  key={link.section}
-                  onClick={() => handleNavClick(link.section)}
+                  key={link.label}
+                  onClick={() => handleNavClick(link)}
                   whileHover={{ y: -2 }}
-                  className="text-base font-medium text-white hover:text-gray-300 transition-colors tracking-wide focus:outline-none"
+                  className="text-base font-medium text-white hover:text-gray-300 transition-colors tracking-wide focus:outline-none min-h-[44px]"
                 >
                   {link.label}
                 </motion.button>
               ))}
-              <motion.button
-                onClick={() => { setMobileMenuOpen(false); navigate('/track'); }}
-                whileHover={{ y: -2 }}
-                className="text-base font-medium text-cyan-400 hover:text-cyan-300 transition-colors tracking-wide flex items-center gap-1.5 focus:outline-none"
-              >
-                <Truck size={16} />
-                <span>Track Order</span>
-              </motion.button>
             </nav>
           )}
 
@@ -161,9 +164,9 @@ export function Header() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={openAuthModal}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold rounded-full text-xs shadow-lg hover:brightness-110 transition-all"
+                  className="flex items-center gap-2 px-5 py-2 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-xs shadow-md transition-all uppercase tracking-wider"
                 >
-                  <User size={14} />
+                  <User size={14} className="text-black" />
                   <span>Sign In</span>
                 </motion.button>
               )}
@@ -194,20 +197,13 @@ export function Header() {
           >
             {navLinks.map((link) => (
               <button
-                key={link.section}
-                onClick={() => handleNavClick(link.section)}
-                className="text-left text-base font-medium text-white hover:text-gray-300 transition-colors py-2 border-b border-white/5"
+                key={link.label}
+                onClick={() => handleNavClick(link)}
+                className="text-left text-base font-medium text-white hover:text-gray-300 transition-colors py-3 border-b border-white/5 min-h-[44px] flex items-center"
               >
                 {link.label}
               </button>
             ))}
-            <button
-              onClick={() => { setMobileMenuOpen(false); navigate('/track'); }}
-              className="text-left text-base font-bold text-cyan-400 hover:text-cyan-300 transition-colors py-2 flex items-center gap-2"
-            >
-              <Truck size={18} />
-              <span>Track Order & History</span>
-            </button>
           </motion.nav>
         )}
       </div>

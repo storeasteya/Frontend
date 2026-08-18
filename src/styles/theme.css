@@ -122,12 +122,21 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    cursor: none !important;
   }
 
   body {
     @apply bg-background text-foreground;
-    cursor: none !important;
+  }
+
+  .font-display {
+    font-family: 'Fredoka', 'Outfit', system-ui, -apple-system, sans-serif;
+  }
+
+  .glass-heading {
+    background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
   }
 
   /**
