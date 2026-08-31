@@ -96,7 +96,17 @@ export function Header() {
 
           {/* Right Icons */}
           {!isAdminPage && (
-            <div className="flex items-center gap-4 lg:gap-6">
+            <div className="flex items-center gap-3 lg:gap-5">
+              <motion.button
+                onClick={() => navigate('/track')}
+                whileHover={{ y: -2 }}
+                className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-medium text-base transition-colors focus:outline-none min-h-[44px]"
+                title="Track Order"
+              >
+                <Truck size={18} className="text-cyan-400" />
+                <span>Track Order</span>
+              </motion.button>
+
               <motion.button
                 onClick={() => navigate('/cart')}
                 whileHover={{ scale: 1.1 }}
@@ -122,7 +132,7 @@ export function Header() {
                     {user.picture ? (
                       <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-cyan-400" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center font-bold text-xs text-white">
+                      <div className="w-8 h-8 rounded-full bg-cyan-400 text-black flex items-center justify-center font-bold text-xs">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -164,9 +174,9 @@ export function Header() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={openAuthModal}
-                  className="flex items-center gap-2 px-5 py-2 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-xs shadow-md transition-all uppercase tracking-wider"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-cyan-400 text-black hover:bg-cyan-300 font-bold rounded-full text-xs shadow-lg shadow-cyan-400/20 transition-all uppercase tracking-wider min-h-[44px]"
                 >
-                  <User size={14} className="text-black" />
+                  <User size={16} className="text-black fill-black" />
                   <span>Sign In</span>
                 </motion.button>
               )}
@@ -181,7 +191,7 @@ export function Header() {
 
           {/* Mobile Toggle */}
           {!isAdminPage && (
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-white p-2">
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
               {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           )}
@@ -204,6 +214,16 @@ export function Header() {
                 {link.label}
               </button>
             ))}
+
+            {!user && (
+              <button
+                onClick={() => { setMobileMenuOpen(false); openAuthModal(); }}
+                className="flex items-center justify-center gap-2.5 py-3 px-5 bg-cyan-400 text-black hover:bg-cyan-300 font-bold rounded-full text-sm shadow-lg my-2 uppercase tracking-wider min-h-[44px]"
+              >
+                <User size={18} className="text-black fill-black" />
+                <span>Sign In</span>
+              </button>
+            )}
           </motion.nav>
         )}
       </div>

@@ -8,7 +8,7 @@ interface TshirtShelfProps {
   onBuyNow?: (product: any, size: string) => void;
 }
 
-export function TshirtShelf({ products, title = "T-Shirt Shelf", subtitle = "Featured Anime Collection", onBuyNow }: TshirtShelfProps) {
+export function TshirtShelf({ products, title = "Anime Collection Shelf", subtitle = "Featured Anime Collection", onBuyNow }: TshirtShelfProps) {
   if (!products || products.length === 0) return null;
 
   return (

@@ -83,7 +83,7 @@ export const AuthModal: React.FC = () => {
 
           {/* Header */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center p-3 mb-3 bg-gradient-to-tr from-purple-500/20 to-cyan-500/20 border border-white/10 rounded-2xl">
+            <div className="inline-flex items-center justify-center p-3 mb-3 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl shadow-lg shadow-cyan-500/20">
               <Sparkles className="w-7 h-7 text-cyan-400" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
@@ -132,7 +132,7 @@ export const AuthModal: React.FC = () => {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/10" />
             </div>
-            <span className="relative px-3 text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-widest bg-gray-950">
+            <span className="relative px-3 text-[10px] sm:text-xs font-semibold text-cyan-400/80 uppercase tracking-widest bg-gray-950">
               or continue with email
             </span>
           </div>
@@ -145,7 +145,7 @@ export const AuthModal: React.FC = () => {
                   Your Name
                 </label>
                 <div className="relative">
-                  <User size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                  <User size={16} className="absolute left-3.5 top-3.5 text-cyan-400/70" />
                   <input
                     type="text"
                     required={isSignUp}
@@ -163,7 +163,7 @@ export const AuthModal: React.FC = () => {
                 Email Address
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                <Mail size={16} className="absolute left-3.5 top-3.5 text-cyan-400/70" />
                 <input
                   type="email"
                   required
@@ -181,13 +181,13 @@ export const AuthModal: React.FC = () => {
                   Password
                 </label>
                 {!isSignUp && (
-                  <span className="text-[11px] text-cyan-400 hover:underline cursor-pointer">
+                  <span className="text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer font-medium">
                     Forgot password?
                   </span>
                 )}
               </div>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                <Lock size={16} className="absolute left-3.5 top-3.5 text-cyan-400/70" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -199,7 +199,7 @@ export const AuthModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3.5 top-3 text-cyan-400/70 hover:text-cyan-300 transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -214,7 +214,7 @@ export const AuthModal: React.FC = () => {
               whileTap={{ scale: isLoading ? 1 : 0.98 }}
               disabled={isLoading}
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 text-white font-bold rounded-xl shadow-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm mt-3"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-400 text-white font-black text-base rounded-2xl shadow-lg shadow-purple-900/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-4"
             >
               {isLoading ? (
                 <>
@@ -233,15 +233,15 @@ export const AuthModal: React.FC = () => {
             <button
               type="button"
               onClick={() => handleToggleMode(!isSignUp)}
-              className="font-bold text-cyan-400 hover:underline ml-1"
+              className="font-bold text-cyan-400 hover:text-cyan-300 hover:underline ml-1"
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>
           </div>
 
           {/* Trust Badge */}
-          <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-center gap-2 text-[11px] text-gray-500">
-            <ShieldCheck size={14} className="text-emerald-400" />
+          <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-center gap-2 text-[11px] text-gray-400">
+            <ShieldCheck size={14} className="text-cyan-400" />
             <span>Secure 256-bit encrypted authentication</span>
           </div>
         </motion.div>

@@ -142,7 +142,7 @@ export function ProductCard(props: ProductCardProps) {
                   <button
                     key={sz}
                     onClick={() => setSelectedSize(sz)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+                    className={`min-h-[36px] min-w-[36px] px-3 py-1.5 text-xs font-bold rounded-lg border transition-all duration-200 ${
                       selectedSize === sz
                         ? "bg-white text-black border-white shadow-md scale-105"
                         : "bg-white/5 text-gray-300 border-white/10 hover:border-white/30 hover:bg-white/10"
@@ -167,11 +167,14 @@ export function ProductCard(props: ProductCardProps) {
 
           {/* Price & Action Buttons */}
           <div>
-            <div className="flex items-baseline justify-between mb-4">
+            <div className="flex items-baseline gap-2.5 mb-4">
               <span className="text-2xl font-black text-white">
-                ₹{props.price}
+                ₹{props.price || 599}
               </span>
-              <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+              <span className="text-sm text-gray-500 line-through font-semibold">
+                ₹999
+              </span>
+              <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded ml-auto">
                 In Stock
               </span>
             </div>
@@ -181,7 +184,7 @@ export function ProductCard(props: ProductCardProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAddToCart}
-                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border transition-all ${
+                className={`min-h-[44px] py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border transition-all duration-200 ${
                   added
                     ? "bg-emerald-500 text-white border-emerald-400"
                     : "bg-white/10 text-white border-white/20 hover:bg-white/20"
@@ -195,7 +198,7 @@ export function ProductCard(props: ProductCardProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBuyNow}
-                className="py-2.5 px-3 bg-white text-black hover:bg-gray-200 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition-all"
+                className="min-h-[44px] py-2.5 px-3 bg-white text-black hover:bg-gray-200 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition-all duration-200"
               >
                 <Zap size={16} className="fill-black" />
                 Buy Now

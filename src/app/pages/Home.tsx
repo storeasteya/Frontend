@@ -99,9 +99,9 @@ export default function Home() {
 
   // Demo products shown when Supabase isn't configured
   const demoProducts = [
-    { id: "1", name: "Solo Leveling — Sung Jinwoo", description: "Premium heavyweight cotton tee featuring the Shadow Monarch in his iconic battle stance. GSM 240, pre-shrunk.", price: 799, image_url: heroImage, sizes: ["S", "M", "L", "XL", "XXL"], featured: true, anime_series: "Solo Leveling" },
-    { id: "2", name: "Dragon Ball Z — Super Saiyan", description: "Ultra Instinct Goku oversized drop-shoulder tee. 100% ringspun cotton with vibrant DTF print.", price: 749, image_url: heroImage, sizes: ["S", "M", "L", "XL"], featured: false, anime_series: "Dragon Ball Z" },
-    { id: "3", name: "Demon Slayer — Tanjiro", description: "Water Breathing pattern wrap-around print on premium white base. Limited edition.", price: 849, image_url: heroImage, sizes: ["M", "L", "XL", "XXL"], featured: true, anime_series: "Demon Slayer" },
+    { id: "1", name: "Solo Leveling — Sung Jinwoo", description: "Premium heavyweight cotton apparel featuring the Shadow Monarch in his iconic battle stance. GSM 240, pre-shrunk.", price: 599, image_url: heroImage, sizes: ["S", "M", "L", "XL", "XXL"], featured: true, anime_series: "Solo Leveling" },
+    { id: "2", name: "Dragon Ball Z — Super Saiyan", description: "Ultra Instinct Goku oversized drop-shoulder edition. 100% ringspun cotton with vibrant DTF print.", price: 599, image_url: heroImage, sizes: ["S", "M", "L", "XL"], featured: false, anime_series: "Dragon Ball Z" },
+    { id: "3", name: "Demon Slayer — Tanjiro", description: "Water Breathing pattern wrap-around print on premium white base. Limited edition.", price: 599, image_url: heroImage, sizes: ["M", "L", "XL", "XXL"], featured: true, anime_series: "Demon Slayer" },
   ] as unknown as Product[];
 
   const displayProducts = products.length > 0 ? products : demoProducts;
@@ -126,9 +126,12 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-black" />
         </motion.div>
 
-        {/* Smaller, clean ASTEYA background watermark */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none z-[1]">
-          <span className="text-5xl sm:text-7xl md:text-8xl font-black text-white/10 tracking-[0.25em] uppercase font-display">
+        {/* Responsive, Fluid ASTEYA background watermark */}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none z-[1] px-4 w-full">
+          <span 
+            className="font-black text-white/[0.04] uppercase font-display leading-none whitespace-nowrap text-center tracking-tight sm:tracking-normal md:tracking-wider transition-all"
+            style={{ fontSize: "clamp(2.5rem, 16vw, 13rem)" }}
+          >
             ASTEYA
           </span>
         </div>

@@ -17,9 +17,9 @@ export function Footer() {
 
   const footerLinks: Record<string, { label: string; path?: string; section?: string }[]> = {
     Shop: [
-      { label: "T-Shirts", section: "shop" },
+      { label: "Anime Collection", section: "shop" },
       { label: "New Arrivals", section: "shop" },
-      { label: "Collections", section: "shop" },
+      { label: "Featured Drops", section: "shop" },
     ],
     Company: [
       { label: "About Us", path: "/about" },
@@ -42,7 +42,7 @@ export function Footer() {
           <div className="md:col-span-2">
             <h3 className="text-4xl font-black font-display mb-6 tracking-tighter glass-heading">ASTEYA</h3>
             <p className="text-gray-400 mb-8 leading-relaxed max-w-md text-sm sm:text-base">
-              Heavyweight anime graphic t-shirts. 3-5 Days Express Delivery with 7 Days Easy Returns &amp; Exchange.
+              Heavyweight anime graphic collection. 3-5 Days Express Delivery with 7 Days Easy Returns &amp; Exchange.
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
