@@ -5,7 +5,6 @@ import { useNavigate } from "react-router";
 import { supabase, type Product, type WebsiteTestimonial } from "../../lib/supabase";
 import { fetchProducts as apiFetchProducts } from "../../lib/api";
 import { useCart } from "../../lib/cartContext";
-import { HeroTestimonial } from "../components/HeroTestimonial";
 import { TshirtShelf } from "../components/TshirtShelf";
 import heroImage from "figma:asset/ee488f8ea6fc6504e921786a580af77a5035691f.png";
 
@@ -127,10 +126,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-black" />
         </motion.div>
 
-        {/* Featured Hero Customer Review (Replaces watermark) */}
-        <div className="absolute right-4 bottom-24 lg:right-16 lg:bottom-28 z-20 hidden md:block pointer-events-auto">
-          <HeroTestimonial />
-        </div>
+
 
         <motion.div
           className="absolute inset-0 z-[1]"
