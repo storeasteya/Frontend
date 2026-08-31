@@ -69,9 +69,9 @@ export const AuthModal: React.FC = () => {
           exit={{ opacity: 0, scale: 0.92, y: 20 }}
           className="relative w-full max-w-md p-6 sm:p-8 overflow-hidden bg-gradient-to-b from-gray-900 via-black to-gray-950 border border-white/15 rounded-3xl shadow-2xl"
         >
-          {/* Neon Background Accents */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-purple-600/30 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-cyan-600/30 rounded-full blur-3xl pointer-events-none" />
+          {/* Ambient Glow Accents */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
 
           {/* Close Button */}
           <button
@@ -214,11 +214,11 @@ export const AuthModal: React.FC = () => {
               whileTap={{ scale: isLoading ? 1 : 0.98 }}
               disabled={isLoading}
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-400 text-white font-black text-base rounded-2xl shadow-lg shadow-purple-900/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-4"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-white text-black hover:bg-gray-200 font-bold text-base rounded-2xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-4"
             >
               {isLoading ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin text-black" />
                   <span>{isSignUp ? 'Creating Account...' : 'Signing In...'}</span>
                 </>
               ) : (

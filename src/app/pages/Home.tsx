@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { supabase, type Product, type WebsiteTestimonial } from "../../lib/supabase";
 import { fetchProducts as apiFetchProducts } from "../../lib/api";
 import { useCart } from "../../lib/cartContext";
+import { HeroTestimonial } from "../components/HeroTestimonial";
 import { TshirtShelf } from "../components/TshirtShelf";
 import heroImage from "figma:asset/ee488f8ea6fc6504e921786a580af77a5035691f.png";
 
@@ -126,14 +127,9 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-black" />
         </motion.div>
 
-        {/* Responsive, Fluid ASTEYA background watermark */}
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none z-[1] px-4 w-full">
-          <span 
-            className="font-black text-white/[0.04] uppercase font-display leading-none whitespace-nowrap text-center tracking-tight sm:tracking-normal md:tracking-wider transition-all"
-            style={{ fontSize: "clamp(2.5rem, 16vw, 13rem)" }}
-          >
-            ASTEYA
-          </span>
+        {/* Featured Hero Customer Review (Replaces watermark) */}
+        <div className="absolute right-4 bottom-24 lg:right-16 lg:bottom-28 z-20 hidden md:block pointer-events-auto">
+          <HeroTestimonial />
         </div>
 
         <motion.div

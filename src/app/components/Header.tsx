@@ -174,7 +174,7 @@ export function Header() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={openAuthModal}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-cyan-400 text-black hover:bg-cyan-300 font-bold rounded-full text-xs shadow-lg shadow-cyan-400/20 transition-all uppercase tracking-wider min-h-[44px]"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-xs shadow-lg transition-all uppercase tracking-wider min-h-[44px]"
                 >
                   <User size={16} className="text-black fill-black" />
                   <span>Sign In</span>
@@ -218,7 +218,7 @@ export function Header() {
             {!user && (
               <button
                 onClick={() => { setMobileMenuOpen(false); openAuthModal(); }}
-                className="flex items-center justify-center gap-2.5 py-3 px-5 bg-cyan-400 text-black hover:bg-cyan-300 font-bold rounded-full text-sm shadow-lg my-2 uppercase tracking-wider min-h-[44px]"
+                className="flex items-center justify-center gap-2.5 py-3 px-5 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-sm shadow-lg my-2 uppercase tracking-wider min-h-[44px]"
               >
                 <User size={18} className="text-black fill-black" />
                 <span>Sign In</span>
