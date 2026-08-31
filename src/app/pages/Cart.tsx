@@ -837,9 +837,9 @@ export default function CartPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50 text-black font-black text-lg rounded-2xl transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-[0.99]"
+                    className="w-full py-4 bg-white hover:bg-gray-200 disabled:bg-white/50 text-black font-black text-lg rounded-2xl transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2 active:scale-[0.99]"
                   >
-                    <ShieldCheck size={24} />
+                    <ShieldCheck size={24} className="text-black" />
                     <span>
                       {paymentStep === "creating_order"
                         ? "Creating Order..."
