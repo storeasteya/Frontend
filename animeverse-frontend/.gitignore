@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+dist
+build
+
+# Environment files
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# IDE & System
+.DS_Store
+*.log
+.vscode
+.idea
+
+.vercel
+.env*

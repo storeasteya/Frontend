@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router";
 import { Lock, Mail, Phone, Eye, EyeOff, Key, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 import { supabase, isAdmin, updateAdminLogin } from "../../lib/supabase";
+import { adminLogin, adminForgotPassword, adminResetPassword } from "../../lib/api";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -10,14 +11,14 @@ export default function AdminLogin() {
   // Mode: 'login' | 'forgot' | 'reset'
   const [mode, setMode] = useState<'login' | 'forgot' | 'reset'>('login');
 
-  // Form State
-  const [email, setEmail] = useState("admin@animeverse.com");
-  const [password, setPassword] = useState("admin123");
-  const [phone, setPhone] = useState("9685982012");
+  // Form State (Cleaned up - no default credentials shown)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   // Forgot / Reset State
-  const [secretKey, setSecretKey] = useState("9685982012");
+  const [secretKey, setSecretKey] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -25,6 +26,11 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // SEO Page Title
+  useEffect(() => {
+    document.title = "Admin Authentication | ASTEYA Anime Store";
+  }, []);
 
   // Handle Admin Login
   async function handleLogin(e: React.FormEvent) {
@@ -34,7 +40,16 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      // 1. Check if email is admin authorized
+      // 1. Attempt backend API login with email, password, and phone
+      try {
+        await adminLogin(email, password, phone);
+        navigate('/admin');
+        return;
+      } catch (e: any) {
+        console.log("Backend login fallback notice:", e.message);
+      }
+
+      // 2. Check if email is admin authorized
       const adminCheck = await isAdmin(email);
       if (!adminCheck && email !== 'admin@animeverse.com' && !email.includes('admin')) {
         setError("Unauthorized. Only administrator accounts can access this panel.");
@@ -42,7 +57,7 @@ export default function AdminLogin() {
         return;
       }
 
-      // 2. Fallback credential validation
+      // 3. Fallback credential validation
       const storedCustomPw = localStorage.getItem('admin_custom_password') || 'admin123';
       const isEmailValid = email === 'admin@animeverse.com' || email === 'admin' || email.includes('admin');
       const isPhoneValid = phone === '9685982012';
@@ -66,7 +81,7 @@ export default function AdminLogin() {
           localStorage.setItem('admin_authenticated', 'true');
           navigate('/admin');
         } else {
-          setError("Invalid Admin Credentials. Please check your Admin Email, Password, or Phone.");
+          setError("Invalid Admin Credentials. Please check your Email, Password, or Security Phone Key.");
         }
       }
     } catch (err) {
@@ -85,11 +100,10 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      if (email === 'admin@animeverse.com' || email === 'admin' || phone === '9685982012') {
+      const res = await adminForgotPassword(email, phone);
+      if (res.success) {
         setSuccessMsg("Admin identity verified! Enter your new password below.");
         setMode('reset');
-      } else {
-        setError("Admin user not found with the provided credentials.");
       }
     } catch (err: any) {
       setError(err.message || "Failed to verify admin account.");
@@ -122,15 +136,14 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      if (email === 'admin@animeverse.com' || email === 'admin' || secretKey === '9685982012') {
+      const res = await adminResetPassword(email, newPassword, secretKey);
+      if (res.success) {
         setPassword(newPassword);
         localStorage.setItem('admin_custom_password', newPassword);
         setSuccessMsg("Password reset successfully! You can now login with your new password.");
         setMode('login');
         setNewPassword("");
         setConfirmPassword("");
-      } else {
-        setError("Invalid security key or unauthorized reset request.");
       }
     } catch (err: any) {
       setError(err.message || "Failed to reset password.");
@@ -140,41 +153,43 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20 bg-black text-white flex items-center justify-center relative overflow-hidden">
-      {/* Background glowing aura */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-600/15 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen bg-black text-white flex flex-col justify-between selection:bg-white selection:text-black">
 
-      <div className="container mx-auto px-6 relative z-10">
+      {/* Background glowing aura */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-white/10 via-white/5 to-transparent blur-3xl opacity-40 rounded-full" />
+      </div>
+
+      <main className="relative z-10 pt-32 pb-24 container mx-auto px-4 sm:px-6 flex-1 max-w-md">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-md mx-auto"
         >
-          {/* Top Lock Icon & Title Header */}
+          {/* Top Lock Icon & Header */}
           <div className="text-center mb-8">
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, type: "spring" }}
-              className="inline-block p-5 bg-gradient-to-tr from-white/10 to-white/5 border border-white/20 rounded-3xl mb-4 shadow-2xl backdrop-blur-xl"
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center justify-center w-16 h-16 mb-6 bg-white/10 border border-white/20 rounded-2xl shadow-2xl backdrop-blur-xl"
             >
               {mode === 'login' ? (
-                <Lock size={44} className="text-cyan-400" />
+                <Lock size={32} className="text-white" />
               ) : (
-                <Key size={44} className="text-purple-400" />
+                <Key size={32} className="text-white" />
               )}
             </motion.div>
-            <h1 className="text-4xl font-black tracking-tight mb-2">
+
+            <h1 className="text-3xl sm:text-4xl font-black font-display tracking-tight text-white mb-3">
               {mode === 'login' && 'Admin Portal'}
-              {mode === 'forgot' && 'Verify Admin Identity'}
-              {mode === 'reset' && 'Reset Admin Password'}
+              {mode === 'forgot' && 'Verify Identity'}
+              {mode === 'reset' && 'Reset Password'}
             </h1>
-            <p className="text-gray-400 text-sm">
-              {mode === 'login' && 'Enter your credentials to access the management panel'}
-              {mode === 'forgot' && 'Provide your Admin Email or Security Phone to verify access'}
-              {mode === 'reset' && 'Create a new secure password for your Admin account'}
+            <p className="text-gray-400 text-xs sm:text-sm max-w-xs mx-auto leading-relaxed">
+              {mode === 'login' && 'Enter your administrator credentials to access the management dashboard.'}
+              {mode === 'forgot' && 'Provide your Admin Email and Security Phone key to verify ownership.'}
+              {mode === 'reset' && 'Create a new secure password for your administrator account.'}
             </p>
           </div>
 
@@ -208,7 +223,7 @@ export default function AdminLogin() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onSubmit={handleLogin}
-              className="bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-2xl space-y-5"
+              className="bg-white/5 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5"
             >
               {/* Admin Email / ID */}
               <div>
@@ -221,9 +236,9 @@ export default function AdminLogin() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@animeverse.com"
+                    placeholder="admin@asteya.com"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                 </div>
               </div>
@@ -241,7 +256,7 @@ export default function AdminLogin() {
                       setSuccessMsg("");
                       setMode('forgot');
                     }}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors font-semibold"
+                    className="text-xs text-gray-400 hover:text-white transition-colors font-medium"
                   >
                     Forgot Password?
                   </button>
@@ -254,7 +269,7 @@ export default function AdminLogin() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-12 pr-12 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                   <button
                     type="button"
@@ -277,22 +292,20 @@ export default function AdminLogin() {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="9685982012"
+                    placeholder="Enter Security Phone Key"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 text-white font-bold rounded-xl text-base shadow-lg hover:brightness-110 transition-all disabled:opacity-50 mt-2"
+                className="w-full py-4 bg-white text-black font-bold rounded-xl text-sm shadow-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
               >
                 {loading ? "Authenticating..." : "Login to Admin Dashboard"}
-              </motion.button>
+              </button>
             </motion.form>
           )}
 
@@ -302,7 +315,7 @@ export default function AdminLogin() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               onSubmit={handleVerifyAdmin}
-              className="bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-2xl space-y-5"
+              className="bg-white/5 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5"
             >
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
@@ -314,9 +327,9 @@ export default function AdminLogin() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@animeverse.com"
+                    placeholder="admin@asteya.com"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                 </div>
               </div>
@@ -331,9 +344,9 @@ export default function AdminLogin() {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="9685982012"
+                    placeholder="Enter Security Phone Key"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                 </div>
               </div>
@@ -351,15 +364,13 @@ export default function AdminLogin() {
                   <ArrowLeft size={16} /> Back
                 </button>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl text-sm shadow-lg hover:brightness-110 transition-all disabled:opacity-50"
+                  className="flex-1 py-3.5 bg-white text-black font-bold rounded-xl text-sm shadow-xl hover:bg-gray-200 transition-all disabled:opacity-50"
                 >
                   {loading ? "Verifying..." : "Verify & Continue"}
-                </motion.button>
+                </button>
               </div>
             </motion.form>
           )}
@@ -370,7 +381,7 @@ export default function AdminLogin() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               onSubmit={handleResetPassword}
-              className="bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-2xl space-y-5"
+              className="bg-white/5 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-5"
             >
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
@@ -384,7 +395,7 @@ export default function AdminLogin() {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password"
                     required
-                    className="w-full pl-12 pr-12 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                   <button
                     type="button"
@@ -408,7 +419,7 @@ export default function AdminLogin() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter new password"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                 </div>
               </div>
@@ -423,9 +434,9 @@ export default function AdminLogin() {
                     type="text"
                     value={secretKey}
                     onChange={(e) => setSecretKey(e.target.value)}
-                    placeholder="9685982012"
+                    placeholder="Security Phone Key"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400 transition-colors text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 transition-all text-sm"
                   />
                 </div>
               </div>
@@ -443,42 +454,24 @@ export default function AdminLogin() {
                   <ArrowLeft size={16} /> Back
                 </button>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-bold rounded-xl text-sm shadow-lg hover:brightness-110 transition-all disabled:opacity-50"
+                  className="flex-1 py-3.5 bg-white text-black font-bold rounded-xl text-sm shadow-xl hover:bg-gray-200 transition-all disabled:opacity-50"
                 >
                   {loading ? "Updating..." : "Update Admin Password"}
-                </motion.button>
+                </button>
               </div>
             </motion.form>
           )}
 
-          {/* DEFAULT CREDENTIALS INFO CARD */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 p-5 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl text-xs space-y-2 text-gray-300"
-          >
-            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-              <span className="font-bold text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                🔑 Default Admin Credentials
-              </span>
-              <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded text-[10px] font-mono">
-                SYSTEM DEFAULT
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-1.5 font-mono">
-              <p><span className="text-gray-400">Admin Email:</span> <span className="text-cyan-300 font-bold">admin@animeverse.com</span></p>
-              <p><span className="text-gray-400">Default Password:</span> <span className="text-purple-300 font-bold">admin123</span></p>
-              <p><span className="text-gray-400">Security Phone Key:</span> <span className="text-emerald-300 font-bold">9685982012</span></p>
-            </div>
-          </motion.div>
+          <div className="mt-8 text-center">
+            <Link to="/" className="text-xs text-gray-400 hover:text-white transition-colors">
+              ← Return to Main Store
+            </Link>
+          </div>
         </motion.div>
-      </div>
+      </main>
     </div>
   );
 }

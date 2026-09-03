@@ -1,12 +1,32 @@
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { ScrollingTshirt } from "./ScrollingTshirt";
 import { SetupBanner } from "./SetupBanner";
 import { motion, AnimatePresence } from "motion/react";
+import { useEffect, useState } from "react";
 
 export function RootLayout() {
   const location = useLocation();
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    setIsDesktop(!isTouchDevice);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Global shortcut: Ctrl + Shift + A or Cmd + Shift + A
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        navigate('/admin-login');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   return (
     <div className="relative min-h-screen bg-black text-white overflow-x-hidden">
