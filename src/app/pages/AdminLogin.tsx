@@ -2,8 +2,6 @@ import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { Lock, Mail, Phone, Eye, EyeOff, Key, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
 import { supabase, isAdmin, updateAdminLogin } from "../../lib/supabase";
 import { adminLogin, adminForgotPassword, adminResetPassword } from "../../lib/api";
 
@@ -156,7 +154,6 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col justify-between selection:bg-white selection:text-black">
-      <Header />
 
       {/* Background glowing aura */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -475,8 +472,6 @@ export default function AdminLogin() {
           </div>
         </motion.div>
       </main>
-
-      <Footer />
     </div>
   );
 }

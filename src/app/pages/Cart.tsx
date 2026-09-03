@@ -4,8 +4,6 @@ import { useCart } from "../../lib/cartContext";
 import { useAuth } from "../../lib/authContext";
 import { Link, useNavigate } from "react-router";
 import { ShoppingBag, Trash2, Plus, Minus, CheckCircle, ArrowLeft, Tag, CreditCard, ShieldCheck, Truck, CheckCircle2, MapPin, Copy, Check } from "lucide-react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -326,7 +324,6 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col justify-between">
-      <Header />
 
       <main className="pt-28 pb-20 container mx-auto px-4 sm:px-6 flex-1">
         {orderSuccess ? (
@@ -858,8 +855,6 @@ export default function CartPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

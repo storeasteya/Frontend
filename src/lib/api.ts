@@ -286,3 +286,54 @@ export async function createOrder(orderData: any) {
   localStorage.setItem('animeverse_orders', JSON.stringify(localOrders));
   return newOrder;
 }
+
+// Product Reviews API
+export async function createProductReview(reviewData: {
+  product_id: string;
+  customer_name: string;
+  rating: number;
+  review_text: string;
+  order_id?: string;
+}) {
+  try {
+    const res = await fetch(`${API_URL}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reviewData),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Backend review submission fallback:', err);
+  }
+
+  const localReviews = JSON.parse(localStorage.getItem('animeverse_reviews') || '[]');
+  const newReview = {
+    id: 'rev-' + Date.now(),
+    _id: 'rev-' + Date.now(),
+    ...reviewData,
+    author_name: reviewData.customer_name,
+    content: reviewData.review_text,
+    is_approved: true,
+    created_at: new Date().toISOString()
+  };
+  localReviews.unshift(newReview);
+  localStorage.setItem('animeverse_reviews', JSON.stringify(localReviews));
+  return newReview;
+}
+
+export async function fetchProductReviews(productId?: string) {
+  try {
+    const query = productId ? `?product_id=${productId}` : '';
+    const res = await fetch(`${API_URL}/reviews${query}`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Backend fetch reviews fallback:', err);
+  }
+
+  const localReviews = JSON.parse(localStorage.getItem('animeverse_reviews') || '[]');
+  if (productId) {
+    return localReviews.filter((r: any) => r.product_id === productId);
+  }
+  return localReviews;
+}
+

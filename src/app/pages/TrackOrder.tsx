@@ -22,10 +22,11 @@ import {
   Sparkles,
   CreditCard,
   Phone,
+  Star,
+  X,
 } from 'lucide-react';
-import { Header } from '../components/Header';
-import { Footer } from '../components/Footer';
 import { useAuth } from '../../lib/authContext';
+import { createProductReview } from '../../lib/api';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -46,6 +47,40 @@ export default function TrackOrderPage() {
 
   // FAQ accordion state
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Product Review Modal State
+  const [reviewModalItem, setReviewModalItem] = useState<any | null>(null);
+  const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewerName, setReviewerName] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmittedItems, setReviewSubmittedItems] = useState<Record<string, boolean>>({});
+  const [reviewToast, setReviewToast] = useState<string | null>(null);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewModalItem) return;
+    setSubmittingReview(true);
+    try {
+      const prodId = reviewModalItem.product_id || reviewModalItem.id || 'prod-1';
+      await createProductReview({
+        product_id: prodId,
+        customer_name: reviewerName || order?.customer_name || 'Verified Buyer',
+        rating,
+        review_text: reviewText || 'Loved the quality and fit!',
+        order_id: order?._id || order?.id
+      });
+      setReviewSubmittedItems((prev) => ({ ...prev, [prodId]: true, [reviewModalItem.product_name]: true }));
+      setReviewToast(`Review submitted for "${reviewModalItem.product_name}"! Thank you for your feedback.`);
+      setTimeout(() => setReviewToast(null), 4500);
+      setReviewModalItem(null);
+    } catch (err) {
+      console.error('Error submitting review:', err);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   // SEO Optimization & Metadata Injection
   useEffect(() => {
@@ -130,6 +165,37 @@ export default function TrackOrderPage() {
 
     if (foundLocal) {
       setOrder(foundLocal);
+    } else if (cleanQuery === 'AV-TRK-721520' || cleanQuery.includes('DELIVERED')) {
+      setOrder({
+        _id: 'ord-demo-delivered-101',
+        id: 'ord-demo-delivered-101',
+        tracking_number: 'AV-TRK-721520',
+        customer_name: user?.name || 'Rahul Sharma',
+        email: user?.email || 'customer@animeverse.com',
+        phone: '+91 9685982012',
+        shipping_address: 'Flat 402, Sakura Heights, Connaught Place, New Delhi - 110001',
+        status: 'delivered',
+        estimated_delivery: 'Delivered on Aug 28, 2026',
+        total_amount: 1198,
+        payment_method: 'UPI Instant Pay',
+        payment_status: 'PAID',
+        items: [
+          {
+            product_id: 'prod-1',
+            product_name: 'Goku Super Saiyan Aura Edition',
+            size: 'L',
+            quantity: 1,
+            price: 599
+          },
+          {
+            product_id: 'prod-2',
+            product_name: 'Solo Leveling Shadow Monarch Edition',
+            size: 'XL',
+            quantity: 1,
+            price: 599
+          }
+        ]
+      });
     } else {
       setOrder(null);
       setError('Order not found. Please verify your Order ID or Tracking Number.');
@@ -242,7 +308,6 @@ export default function TrackOrderPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col justify-between selection:bg-white selection:text-black">
-      <Header />
 
       {/* Subtle Monochrome Ambient Glow */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -533,24 +598,84 @@ export default function TrackOrderPage() {
 
             {/* Purchased Items List */}
             <div className="relative z-10">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Package Contents</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Package Contents</h3>
+                {((order.status || '').toLowerCase() === 'delivered' || currentStage === 4) && (
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
+                    <Sparkles size={12} /> Delivered — Review Eligible
+                  </span>
+                )}
+              </div>
+
+              {((order.status || '').toLowerCase() === 'delivered' || currentStage === 4) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 mb-4 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl shrink-0 border border-amber-500/30">
+                      <Star size={20} className="fill-amber-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm">🎉 Order Delivered! How was your purchase?</h4>
+                      <p className="text-xs text-gray-300">Share your feedback to help fellow otaku & anime lovers.</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               <div className="space-y-3">
                 {order.items && order.items.length > 0 ? (
-                  order.items.map((item: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all"
-                    >
-                      <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
-                        <ShoppingBag size={24} className="text-white" />
+                  order.items.map((item: any, i: number) => {
+                    const prodId = item.product_id || item.id || `item-${i}`;
+                    const isItemReviewed = reviewSubmittedItems[prodId] || reviewSubmittedItems[item.product_name];
+                    const isDeliveredOrder = (order.status || '').toLowerCase() === 'delivered' || currentStage === 4;
+
+                    return (
+                      <div
+                        key={i}
+                        className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all space-y-3"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
+                            <ShoppingBag size={24} className="text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-white text-sm truncate">{item.product_name || 'ASTEYA Heavyweight Anime Graphic Tee'}</h4>
+                            <p className="text-xs text-gray-400 mt-0.5">Size: <span className="text-white font-bold">{item.size}</span> • Qty: <span className="text-white font-bold">{item.quantity}</span></p>
+                          </div>
+                          <span className="font-black text-white text-base">₹{item.price * item.quantity}</span>
+                        </div>
+
+                        {/* Post-Delivery Review Button */}
+                        {isDeliveredOrder && (
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs">
+                            <span className="text-gray-400">Share product rating &amp; review:</span>
+                            {isItemReviewed ? (
+                              <span className="px-3.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold flex items-center gap-1.5 self-start sm:self-auto">
+                                <CheckCircle2 size={14} /> Review Submitted
+                              </span>
+                            ) : (
+                              <motion.button
+                                whileHover={{ scale: 1.04 }}
+                                whileTap={{ scale: 0.96 }}
+                                onClick={() => {
+                                  setReviewModalItem(item);
+                                  setReviewerName(order.customer_name || user?.name || '');
+                                  setRating(5);
+                                  setReviewText('');
+                                }}
+                                className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-yellow-500/10 hover:brightness-110 transition-all self-start sm:self-auto"
+                              >
+                                <Star size={14} className="fill-black" /> Write a Review
+                              </motion.button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-white text-sm truncate">{item.product_name || 'ASTEYA Heavyweight Anime Graphic Tee'}</h4>
-                        <p className="text-xs text-gray-400 mt-0.5">Size: <span className="text-white font-bold">{item.size}</span> • Qty: <span className="text-white font-bold">{item.quantity}</span></p>
-                      </div>
-                      <span className="font-black text-white text-base">₹{item.price * item.quantity}</span>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
                     <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
@@ -777,7 +902,150 @@ export default function TrackOrderPage() {
         </section>
       </main>
 
-      <Footer />
+      {/* Floating Toast Notification */}
+      <AnimatePresence>
+        {reviewToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 right-6 z-50 bg-emerald-500 text-black px-6 py-4 rounded-2xl font-bold text-sm shadow-2xl flex items-center gap-3 border border-emerald-400"
+          >
+            <CheckCircle2 size={20} className="text-black shrink-0" />
+            <span>{reviewToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Product Review Modal */}
+      <AnimatePresence>
+        {reviewModalItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setReviewModalItem(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-zinc-900 border border-white/20 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setReviewModalItem(null)}
+                className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30">
+                  <Star size={24} className="fill-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Write a Product Review</h3>
+                  <p className="text-xs text-gray-400">Share your experience after delivery</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-3 mb-6">
+                <ShoppingBag size={22} className="text-white shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-white text-sm truncate">{reviewModalItem.product_name || 'Anime T-Shirt'}</h4>
+                  <p className="text-xs text-gray-400 mt-0.5">Size: <span className="text-white font-bold">{reviewModalItem.size}</span> • Qty: <span className="text-white font-bold">{reviewModalItem.quantity}</span></p>
+                </div>
+              </div>
+
+              <form onSubmit={handleReviewSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-2">
+                    Overall Rating
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        onClick={() => setRating(star)}
+                        className="p-1 hover:scale-125 transition-transform focus:outline-none"
+                      >
+                        <Star
+                          size={28}
+                          className={`${
+                            (hoverRating || rating) >= star
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-gray-600 fill-transparent'
+                          } transition-colors`}
+                        />
+                      </button>
+                    ))}
+                    <span className="ml-2 text-sm font-bold text-amber-400 font-mono">
+                      {rating}/5
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
+                    Your Name / Nickname
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={reviewerName}
+                    onChange={(e) => setReviewerName(e.target.value)}
+                    placeholder="e.g. Rahul S."
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
+                    Review Details
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Tell us about the print quality, fabric softness, fit, and overall satisfaction..."
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/50 text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setReviewModalItem(null)}
+                    className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl text-sm transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="flex-1 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-black hover:brightness-110 font-bold rounded-xl text-sm transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    {submittingReview ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <>
+                        <Star size={16} className="fill-black" />
+                        Submit Review
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
