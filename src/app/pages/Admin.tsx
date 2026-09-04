@@ -2,17 +2,23 @@ import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
-  Plus, Edit, Trash2, Package, Tag, Star, MessageSquare,
+  Plus, Edit, Trash2, Package, ShoppingBag, Tag, Star, MessageSquare,
   HelpCircle, Video, LogOut, Check, X
 } from "lucide-react";
 import { supabase, type Product, type Coupon, type ProductReview, type WebsiteTestimonial, type SupportInfo, type ScrollingAnimation } from "../../lib/supabase";
+import { fetchProducts as apiFetchProducts, createProduct as apiCreateProduct, updateProduct as apiUpdateProduct, deleteProduct as apiDeleteProduct } from "../../lib/api";
+
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+
+type TabType = "products" | "orders" | "coupons" | "reviews" | "testimonials" | "support" | "animations";
 
 export default function Admin() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"products" | "coupons" | "reviews" | "testimonials" | "support" | "animations">("products");
+  const [activeTab, setActiveTab] = useState<TabType>("products");
 
   // States for all data
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [testimonials, setTestimonials] = useState<WebsiteTestimonial[]>([]);
@@ -50,6 +56,9 @@ export default function Admin() {
       case "products":
         await fetchProducts();
         break;
+      case "orders":
+        await fetchOrders();
+        break;
       case "coupons":
         await fetchCoupons();
         break;
@@ -70,8 +79,24 @@ export default function Admin() {
   }
 
   async function fetchProducts() {
-    const { data } = await supabase.from('products').select('*').order('display_order');
-    if (data) setProducts(data);
+    try {
+      const data = await apiFetchProducts();
+      if (data) setProducts(data);
+    } catch (err) {
+      const { data } = await supabase.from('products').select('*').order('display_order');
+      if (data) setProducts(data);
+    }
+  }
+
+  async function fetchOrders() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/orders`);
+      const data = await res.json();
+      if (Array.isArray(data)) setOrders(data);
+    } catch (err) {
+      console.warn('Backend orders endpoint offline, loading demo orders');
+      setOrders([]);
+    }
   }
 
   async function fetchCoupons() {
@@ -115,14 +140,22 @@ export default function Admin() {
   async function saveProduct() {
     const data = {
       ...productForm,
-      price: parseFloat(productForm.price),
+      price: parseFloat(productForm.price) || 0,
       images: productForm.images.filter(i => i.trim())
     };
 
-    if (editingProduct) {
-      await supabase.from('products').update(data).eq('id', editingProduct.id);
-    } else {
-      await supabase.from('products').insert([data]);
+    try {
+      if (editingProduct) {
+        await apiUpdateProduct(editingProduct.id || (editingProduct as any)._id, data);
+      } else {
+        await apiCreateProduct(data);
+      }
+    } catch (e) {
+      if (editingProduct) {
+        await supabase.from('products').update(data).eq('id', editingProduct.id);
+      } else {
+        await supabase.from('products').insert([data]);
+      }
     }
 
     resetProductForm();
@@ -131,7 +164,11 @@ export default function Admin() {
 
   async function deleteProduct(id: string) {
     if (confirm("Delete this product?")) {
-      await supabase.from('products').delete().eq('id', id);
+      try {
+        await apiDeleteProduct(id);
+      } catch (e) {
+        await supabase.from('products').delete().eq('id', id);
+      }
       fetchProducts();
     }
   }
@@ -301,27 +338,27 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20 bg-black">
-      <div className="container mx-auto px-6">
+    <div className="min-h-screen pt-28 pb-20 md:pt-36 bg-black text-white">
+      <div className="container mx-auto px-4 sm:px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12 flex justify-between items-center"
+          className="mb-8 sm:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
         >
           <div>
-            <h1 className="text-6xl md:text-8xl font-black mb-4 tracking-tighter">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-2 tracking-tighter break-words">
               Admin Dashboard
             </h1>
-            <p className="text-xl text-gray-400">Manage your entire website</p>
+            <p className="text-base sm:text-xl text-gray-400">Manage your entire website</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleLogout}
-            className="px-6 py-3 bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl font-semibold flex items-center gap-2 hover:bg-red-500/30"
+            className="px-5 py-2.5 sm:px-6 sm:py-3 bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl font-semibold flex items-center gap-2 hover:bg-red-500/30 text-sm sm:text-base self-end sm:self-auto"
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
             Logout
           </motion.button>
         </motion.div>
@@ -331,10 +368,11 @@ export default function Admin() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="flex gap-2 mb-12 border-b border-white/10 overflow-x-auto pb-2"
+          className="flex gap-2 mb-8 sm:mb-12 border-b border-white/10 overflow-x-auto pb-2 scrollbar-none"
         >
           {[
             { id: "products", label: "Products", icon: Package },
+            { id: "orders", label: "Orders", icon: ShoppingBag },
             { id: "coupons", label: "Coupons", icon: Tag },
             { id: "reviews", label: "Reviews", icon: MessageSquare },
             { id: "testimonials", label: "Testimonials", icon: Star },
@@ -433,7 +471,7 @@ export default function Admin() {
                   </div>
                   <div className="flex gap-2">
                     <motion.button whileHover={{ scale: 1.05 }} onClick={() => {
-                      setProductForm({ ...product, price: product.price.toString(), images: product.images || [""] });
+                      setProductForm({ ...product, price: product.price.toString(), images: product.images || [""], anime_series: product.anime_series || "" });
                       setEditingProduct(product);
                       setShowProductForm(true);
                     }} className="flex-1 px-4 py-2 bg-white/10 rounded-lg flex items-center justify-center gap-2">
@@ -449,6 +487,189 @@ export default function Admin() {
             </div>
           </div>
         )}
+
+        {/* ORDERS TAB */}
+        {activeTab === "orders" && (
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">Customer Orders ({orders.length})</h2>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={fetchOrders}
+                className="px-6 py-2.5 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-sm hover:bg-white/20"
+              >
+                Refresh Orders
+              </motion.button>
+            </div>
+
+            {orders.length === 0 ? (
+              <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10">
+                <ShoppingBag size={48} className="mx-auto text-gray-500 mb-4" />
+                <h3 className="text-xl font-bold text-gray-300">No Orders Placed Yet</h3>
+                <p className="text-gray-500 text-sm mt-1">New customer orders will automatically appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {orders.map((order: any) => {
+                  const orderId = order._id || order.id;
+                  const currentStatus = order.status || 'pending';
+
+                  const statusFlow = [
+                    { key: 'pending',          label: '📋 Pending',           color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+                    { key: 'processing',       label: '✅ Accepted',          color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+                    { key: 'quality_check',    label: '🔍 Quality Check',     color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+                    { key: 'shipped',          label: '🚚 Dispatched',        color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+                    { key: 'out_for_delivery', label: '📍 Out for Delivery',  color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+                    { key: 'delivered',        label: '🎉 Delivered',         color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                  ];
+
+                  const currentIdx = statusFlow.findIndex(s => s.key === currentStatus);
+                  const displayStatus = statusFlow.find(s => s.key === currentStatus) || statusFlow[0];
+
+                  async function updateOrderStatus(newStatus: string) {
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus }),
+                      });
+                      if (res.ok) {
+                        const updated = await res.json();
+                        setOrders((prev: any[]) => prev.map(o => (o._id || o.id) === orderId ? { ...o, status: updated.status } : o));
+                      } else {
+                        throw new Error('Backend unavailable');
+                      }
+                    } catch {
+                      // LocalStorage fallback
+                      const stored: any[] = JSON.parse(localStorage.getItem('animeverse_orders') || '[]');
+                      const idx = stored.findIndex(o => (o._id || o.id) === orderId);
+                      if (idx !== -1) {
+                        stored[idx] = { ...stored[idx], status: newStatus };
+                        localStorage.setItem('animeverse_orders', JSON.stringify(stored));
+                      }
+                      setOrders((prev: any[]) => prev.map(o => (o._id || o.id) === orderId ? { ...o, status: newStatus } : o));
+                    }
+                  }
+
+                  return (
+                    <motion.div
+                      key={orderId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-6 bg-gradient-to-br from-white/5 to-white/10 border border-white/10 rounded-2xl space-y-4"
+                    >
+                      {/* Header Row */}
+                      <div className="flex flex-wrap justify-between items-start gap-4 border-b border-white/10 pb-4">
+                        <div>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/20">
+                              #{orderId}
+                            </span>
+                            {order.tracking_number && (
+                              <span className="text-xs font-mono text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded border border-purple-500/20">
+                                {order.tracking_number}
+                              </span>
+                            )}
+                            <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase border ${displayStatus.color}`}>
+                              {displayStatus.label}
+                            </span>
+                          </div>
+                          <h3 className="text-xl font-bold text-white mt-2">{order.customer_name || 'Anonymous Customer'}</h3>
+                          <p className="text-sm text-gray-400">{order.email} | {order.phone}</p>
+                          {order.estimated_delivery && (
+                            <p className="text-xs text-cyan-400 mt-1">🗓 Est. Delivery: {order.estimated_delivery}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-400 block">Total Paid</span>
+                          <span className="text-2xl font-black text-white">₹{order.total_amount || order.total || 0}</span>
+                          <span className="text-xs font-semibold text-emerald-400 block mt-1">
+                            Payment: {order.payment_method || 'UPI'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Addresses */}
+                      <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
+                        <div className="bg-black/30 p-3.5 rounded-xl border border-white/5">
+                          <span className="text-xs font-bold text-gray-400 block mb-1">Shipping Address:</span>
+                          <p className="font-medium">{order.shipping_address || 'N/A'}</p>
+                        </div>
+                        <div className="bg-black/30 p-3.5 rounded-xl border border-white/5">
+                          <span className="text-xs font-bold text-gray-400 block mb-1">Billing Address:</span>
+                          <p className="font-medium">{order.billing_address || order.shipping_address || 'Same as shipping'}</p>
+                        </div>
+                      </div>
+
+                      {/* Items */}
+                      <div>
+                        <span className="text-xs font-bold text-gray-400 block mb-2 uppercase tracking-wider">Ordered Items:</span>
+                        <div className="space-y-2">
+                          {(order.items || []).map((item: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center bg-white/5 px-4 py-2.5 rounded-xl text-sm border border-white/5">
+                              <div>
+                                <span className="font-bold text-white">{item.product_name || `Product ID: ${item.product_id}`}</span>
+                                <span className="ml-2 text-xs font-semibold px-2 py-0.5 bg-white/10 rounded text-cyan-300">
+                                  Size: {item.size}
+                                </span>
+                              </div>
+                              <div className="font-semibold text-gray-300">
+                                Qty: {item.quantity} × ₹{item.price} = <span className="text-white font-bold">₹{item.quantity * item.price}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Status Control Panel */}
+                      <div className="bg-black/40 rounded-xl border border-white/10 p-4">
+                        <span className="text-xs font-bold text-gray-400 block mb-3 uppercase tracking-wider">📦 Update Order Status:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {statusFlow.map((step, idx) => {
+                            const isCurrent = step.key === currentStatus;
+                            const isPast = idx < currentIdx;
+                            const isNext = idx === currentIdx + 1;
+                            return (
+                              <motion.button
+                                key={step.key}
+                                whileHover={!isCurrent ? { scale: 1.05 } : {}}
+                                whileTap={!isCurrent ? { scale: 0.95 } : {}}
+                                onClick={() => !isCurrent && updateOrderStatus(step.key)}
+                                disabled={isCurrent}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all
+                                  ${isCurrent
+                                    ? `${step.color} cursor-default ring-2 ring-white/30`
+                                    : isNext
+                                    ? 'bg-white text-black border-white hover:bg-gray-100 cursor-pointer'
+                                    : isPast
+                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 cursor-pointer opacity-60'
+                                    : 'bg-white/5 text-gray-500 border-white/10 cursor-pointer hover:bg-white/10'
+                                  }`}
+                              >
+                                {isCurrent ? `▶ ${step.label}` : isNext ? `→ Move to ${step.label}` : step.label}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                        {currentStatus === 'pending' && (
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => updateOrderStatus('processing')}
+                            className="mt-3 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-bold rounded-xl text-sm hover:brightness-110 transition-all"
+                          >
+                            ✅ Accept & Confirm Order
+                          </motion.button>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
 
         {/* COUPONS TAB */}
         {activeTab === "coupons" && (
@@ -630,7 +851,7 @@ export default function Admin() {
                   <p className="text-gray-300 mb-4">{t.testimonial_text}</p>
                   <div className="flex gap-2">
                     <motion.button whileHover={{ scale: 1.05 }} onClick={() => {
-                      setTestimonialForm(t);
+                      setTestimonialForm({ ...t, customer_image: t.customer_image || "" });
                       setEditingTestimonial(t);
                       setShowTestimonialForm(true);
                     }} className="flex-1 px-4 py-2 bg-white/10 rounded-lg flex items-center justify-center gap-2">
