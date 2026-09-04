@@ -27,6 +27,7 @@ export const router = createBrowserRouter([
       { path: "contact", Component: Contact },
       { path: "shop", element: <Navigate to="/" replace /> },
       { path: "admin-login", Component: AdminLogin },
+      { path: "admin/login", Component: AdminLogin },
       { path: "admin", Component: Admin },
       { path: "*", Component: NotFound },
     ],
