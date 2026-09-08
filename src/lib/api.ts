@@ -72,12 +72,29 @@ const defaultProducts = [
 ];
 
 function getStoredProducts() {
+  const deletedIds: string[] = JSON.parse(localStorage.getItem('animeverse_deleted_product_ids') || '[]');
   const local = localStorage.getItem('animeverse_products');
+  let productsList = defaultProducts;
+
   if (local) {
-    try { return JSON.parse(local); } catch (e) { }
+    try {
+      productsList = JSON.parse(local);
+    } catch (e) { }
+  } else {
+    localStorage.setItem('animeverse_products', JSON.stringify(defaultProducts));
   }
-  localStorage.setItem('animeverse_products', JSON.stringify(defaultProducts));
-  return defaultProducts;
+
+  if (Array.isArray(productsList)) {
+    productsList = productsList.filter((p: any) => {
+      const pId = p.id || p._id;
+      const pName = p.name ? p.name.toLowerCase() : '';
+      if (deletedIds.includes(pId)) return false;
+      if (deletedIds.some(deleted => pName && pName.includes(deleted.toLowerCase()))) return false;
+      return true;
+    });
+  }
+
+  return productsList;
 }
 
 function saveStoredProducts(products: any[]) {
@@ -150,19 +167,33 @@ export async function updateProduct(id: string, product: any) {
   return product;
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string, name?: string) {
   try {
-    const res = await fetch(`${API_URL}/products/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (res.ok) return await res.json();
+    if (id) {
+      await fetch(`${API_URL}/products/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+    }
   } catch (err) {
     console.warn('Backend offline, deleting locally:', err);
   }
 
+  const deletedIds: string[] = JSON.parse(localStorage.getItem('animeverse_deleted_product_ids') || '[]');
+  if (id && !deletedIds.includes(id)) {
+    deletedIds.push(id);
+  }
+  if (name && !deletedIds.includes(name)) {
+    deletedIds.push(name);
+  }
+  localStorage.setItem('animeverse_deleted_product_ids', JSON.stringify(deletedIds));
+
   let list = getStoredProducts();
-  list = list.filter((p: any) => p.id !== id && p._id !== id);
+  list = list.filter((p: any) => {
+    if (id && (p.id === id || p._id === id)) return false;
+    if (name && p.name && p.name.toLowerCase() === name.toLowerCase()) return false;
+    return true;
+  });
   saveStoredProducts(list);
   return { success: true, id };
 }

@@ -102,7 +102,7 @@ export function ProductCard(props: ProductCardProps) {
         >
           <motion.img
             src={imageUrl}
-            alt={title}
+            alt={`${title} — ${category} oversized anime t-shirt — ASTEYA`}
             className="w-full h-full object-contain mix-blend-lighten group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_10px_20px_rgba(255,255,255,0.15)]"
           />
 

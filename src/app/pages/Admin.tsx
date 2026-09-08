@@ -162,14 +162,39 @@ export default function Admin() {
     fetchProducts();
   }
 
-  async function deleteProduct(id: string) {
-    if (confirm("Delete this product?")) {
+  async function deleteProduct(product: Product | any) {
+    const targetId = typeof product === 'string' ? product : (product?.id || product?._id);
+    const targetName = typeof product === 'object' ? product?.name : '';
+
+    if (confirm(`Delete this product${targetName ? ` (${targetName})` : ''}?`)) {
       try {
-        await apiDeleteProduct(id);
+        await apiDeleteProduct(targetId, targetName);
       } catch (e) {
-        await supabase.from('products').delete().eq('id', id);
+        console.warn("apiDeleteProduct error:", e);
       }
-      fetchProducts();
+
+      try {
+        if (supabase) {
+          if (targetId) {
+            await supabase.from('products').delete().eq('id', targetId);
+            await supabase.from('products').delete().eq('_id', targetId);
+          }
+          if (targetName) {
+            await supabase.from('products').delete().ilike('name', `%${targetName}%`);
+          }
+        }
+      } catch (e) {
+        console.warn("supabase delete error:", e);
+      }
+
+      setProducts((prev) =>
+        prev.filter((p) => {
+          const pId = p.id || (p as any)._id;
+          if (targetId && pId === targetId) return false;
+          if (targetName && p.name && p.name.toLowerCase() === targetName.toLowerCase()) return false;
+          return true;
+        })
+      );
     }
   }
 
@@ -477,7 +502,7 @@ export default function Admin() {
                     }} className="flex-1 px-4 py-2 bg-white/10 rounded-lg flex items-center justify-center gap-2">
                       <Edit size={16} />Edit
                     </motion.button>
-                    <motion.button whileHover={{ scale: 1.05 }} onClick={() => deleteProduct(product.id)}
+                    <motion.button whileHover={{ scale: 1.05 }} onClick={() => deleteProduct(product)}
                       className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg">
                       <Trash2 size={16} />
                     </motion.button>
