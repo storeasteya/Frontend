@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingCart, Zap, Star, Check, Maximize2, X, Truck, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, Zap, Star, Check, Maximize2, X, Truck, RotateCcw, ChevronLeft, ChevronRight, Images } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useCart } from "../../lib/cartContext";
 import { useNavigate } from "react-router";
 
@@ -13,6 +13,7 @@ export interface ProductCardProps {
   image?: string;
   name?: string;
   title?: string;
+  description?: string;
   price: number;
   cross_price?: number;
   original_price?: number;
@@ -40,7 +41,24 @@ export function ProductCard(props: ProductCardProps) {
   const [selectedSize, setSelectedSize] = useState<string>(sizes[0] || 'M');
   const [added, setAdded] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [activeLightboxImage, setActiveLightboxImage] = useState<string>(imageUrl);
+  // Full gallery: front, back, then any extra images added in the admin panel.
+  const gallery = Array.from(new Set([imageUrl, secondaryImageUrl, ...(props.images || [])].map(u => (u || '').trim()).filter(Boolean)));
+  const [activeIndex, setActiveIndex] = useState(0);
+  const openLightbox = (i = 0) => { setActiveIndex(i); setIsLightboxOpen(true); };
+  const showPrev = () => setActiveIndex(i => (i - 1 + gallery.length) % gallery.length);
+  const showNext = () => setActiveIndex(i => (i + 1) % gallery.length);
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') showPrev();
+      else if (e.key === 'ArrowRight') showNext();
+      else if (e.key === 'Escape') setIsLightboxOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [isLightboxOpen, gallery.length]);
 
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -74,7 +92,7 @@ export function ProductCard(props: ProductCardProps) {
       price: props.price,
       image_url: imageUrl,
       secondary_image_url: secondaryImageUrl,
-      images: [imageUrl, secondaryImageUrl].filter(Boolean),
+      images: gallery,
       anime_series: category
     }, selectedSize);
     setAdded(true);
@@ -89,7 +107,7 @@ export function ProductCard(props: ProductCardProps) {
       price: props.price,
       image_url: imageUrl,
       secondary_image_url: secondaryImageUrl,
-      images: [imageUrl, secondaryImageUrl].filter(Boolean),
+      images: gallery,
       anime_series: category
     };
     if (props.onBuyNow) {
@@ -121,7 +139,7 @@ export function ProductCard(props: ProductCardProps) {
 
         {/* Product Image Frame (Hover 2-Image Crossfade) */}
         <div
-          onClick={() => { setActiveLightboxImage(imageUrl); setIsLightboxOpen(true); }}
+          onClick={() => openLightbox(0)}
           className="relative h-64 sm:h-72 overflow-hidden bg-transparent cursor-pointer flex items-center justify-center p-4 group/img"
         >
           {/* Front / Primary Image */}
@@ -141,15 +159,19 @@ export function ProductCard(props: ProductCardProps) {
             />
           )}
 
-          {/* Quick Dual-View Indicator Pill */}
-          {secondaryImageUrl && (
+          {/* Photo count / Dual-View Indicator Pill */}
+          {gallery.length > 2 ? (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-0.5 bg-black/70 border border-white/20 rounded text-[10px] font-mono uppercase tracking-wider text-white opacity-80 group-hover:opacity-100 transition-opacity">
+              <Images size={11} /> {gallery.length} Photos
+            </div>
+          ) : secondaryImageUrl && (
             <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/70 border border-white/20 rounded text-[10px] font-mono uppercase tracking-wider text-white opacity-60 group-hover:opacity-100 transition-opacity">
               Hover 2-View
             </div>
           )}
 
           <button
-            onClick={(e) => { e.stopPropagation(); setActiveLightboxImage(imageUrl); setIsLightboxOpen(true); }}
+            onClick={(e) => { e.stopPropagation(); openLightbox(0); }}
             className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-white hover:text-black rounded-full border border-white/20 text-white transition-all opacity-0 group-hover:opacity-100 z-20"
             title="Expand Full View"
           >
@@ -263,53 +285,115 @@ export function ProductCard(props: ProductCardProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative max-w-4xl w-full bg-gray-950 border border-white/20 rounded-3xl p-6 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center gap-8"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${title} photos`}
+              className="relative max-w-5xl w-full max-h-[92dvh] overflow-y-auto bg-gray-950 border border-white/20 rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col md:flex-row md:items-start gap-6 md:gap-8"
             >
               <button
                 onClick={() => setIsLightboxOpen(false)}
-                className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white hover:text-black rounded-full transition-colors text-white z-10"
+                aria-label="Close"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/10 hover:bg-white hover:text-black rounded-full transition-colors text-white z-20"
               >
                 <X size={20} />
               </button>
 
-              <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-4">
-                <div className="w-full aspect-square flex items-center justify-center p-2 bg-transparent">
-                  <img
-                    src={activeLightboxImage}
-                    alt={title}
-                    className="max-h-full max-w-full object-contain filter drop-shadow-[0_20px_40px_rgba(255,255,255,0.2)]"
-                  />
+              {/* Image Gallery */}
+              <div className="w-full md:w-3/5 flex flex-col items-center">
+                <div className="relative w-full aspect-square flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden select-none">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.img
+                      key={gallery[activeIndex]}
+                      src={gallery[activeIndex]}
+                      alt={`${title} — photo ${activeIndex + 1} of ${gallery.length}`}
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.2 }}
+                      drag={gallery.length > 1 ? "x" : false}
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.4}
+                      onDragEnd={(_, info) => {
+                        if (info.offset.x < -60) showNext();
+                        else if (info.offset.x > 60) showPrev();
+                      }}
+                      draggable={false}
+                      className="max-h-full max-w-full object-contain p-2 cursor-grab active:cursor-grabbing filter drop-shadow-[0_20px_40px_rgba(255,255,255,0.2)]"
+                    />
+                  </AnimatePresence>
+
+                  {gallery.length > 1 && (
+                    <>
+                      <button
+                        onClick={showPrev}
+                        aria-label="Previous photo"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 bg-black/60 hover:bg-white hover:text-black text-white rounded-full border border-white/20 transition-colors"
+                      >
+                        <ChevronLeft size={22} />
+                      </button>
+                      <button
+                        onClick={showNext}
+                        aria-label="Next photo"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 bg-black/60 hover:bg-white hover:text-black text-white rounded-full border border-white/20 transition-colors"
+                      >
+                        <ChevronRight size={22} />
+                      </button>
+                      <span className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 bg-black/70 border border-white/20 rounded-full text-[11px] font-mono text-white">
+                        {activeIndex + 1} / {gallery.length}
+                      </span>
+                    </>
+                  )}
                 </div>
-                {secondaryImageUrl && (
-                  <div className="flex items-center gap-3 mt-4">
-                    <button
-                      onClick={() => setActiveLightboxImage(imageUrl)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider border transition-all ${activeLightboxImage === imageUrl
-                        ? "bg-white text-black border-white shadow"
-                        : "bg-white/10 text-white border-white/20 hover:bg-white/20"
-                        }`}
-                    >
-                      Front View
-                    </button>
-                    <button
-                      onClick={() => setActiveLightboxImage(secondaryImageUrl)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider border transition-all ${activeLightboxImage === secondaryImageUrl
-                        ? "bg-white text-black border-white shadow"
-                        : "bg-white/10 text-white border-white/20 hover:bg-white/20"
-                        }`}
-                    >
-                      Back View
-                    </button>
+
+                {/* Thumbnails */}
+                {gallery.length > 1 && (
+                  <div className="w-full mt-3 flex gap-2 overflow-x-auto pb-1 snap-x">
+                    {gallery.map((src, i) => (
+                      <button
+                        key={src}
+                        onClick={() => setActiveIndex(i)}
+                        aria-label={`Show photo ${i + 1}`}
+                        aria-current={i === activeIndex}
+                        className={`shrink-0 snap-start w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-black/60 border-2 transition-all ${i === activeIndex
+                          ? "border-white opacity-100"
+                          : "border-white/10 opacity-60 hover:opacity-100 hover:border-white/40"
+                          }`}
+                      >
+                        <img src={src} alt="" loading="lazy" className="w-full h-full object-contain p-1" />
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <div className="w-full md:w-1/2 space-y-4 text-left">
+              <div className="w-full md:w-2/5 space-y-4 text-left md:pt-8">
                 <span className="px-3 py-1 bg-white/10 text-white rounded-full text-xs font-bold uppercase tracking-wider">
                   {category}
                 </span>
-                <h2 className="text-3xl font-black text-white">{title}</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-white">{title}</h2>
                 <div className="text-3xl font-black text-white">₹{props.price}</div>
+                {props.description && (
+                  <p className="text-sm text-gray-400 leading-relaxed">{props.description}</p>
+                )}
+
+                {/* Size Selector */}
+                <div>
+                  <span className="text-xs font-medium text-gray-400 block mb-2">Select Size:</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {sizes.map((sz) => (
+                      <button
+                        key={sz}
+                        onClick={() => setSelectedSize(sz)}
+                        className={`min-h-[40px] min-w-[40px] px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${selectedSize === sz
+                          ? "bg-white text-black border-white"
+                          : "bg-white/5 text-gray-300 border-white/10 hover:border-white/30"
+                          }`}
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="space-y-2 py-3 border-y border-white/10 text-sm text-gray-300">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold">

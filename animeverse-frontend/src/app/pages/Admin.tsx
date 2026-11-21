@@ -150,7 +150,7 @@ export default function Admin() {
 
   // Product Functions
   const [productForm, setProductForm] = useState({
-    name: "", description: "", price: "", cross_price: "", image_url: "", secondary_image_url: "", images: ["", ""],
+    name: "", description: "", price: "", cross_price: "", image_url: "", secondary_image_url: "", images: [] as string[],
     sizes: ["S", "M", "L", "XL", "XXL"], in_stock: true, category: "anime",
     anime_series: "", featured: false, display_order: 0
   });
@@ -217,7 +217,7 @@ export default function Admin() {
 
   function resetProductForm() {
     setProductForm({
-      name: "", description: "", price: "", cross_price: "", image_url: "", secondary_image_url: "", images: ["", ""],
+      name: "", description: "", price: "", cross_price: "", image_url: "", secondary_image_url: "", images: [] as string[],
       sizes: ["S", "M", "L", "XL", "XXL"], in_stock: true, category: "anime",
       anime_series: "", featured: false, display_order: 0
     });
@@ -494,6 +494,61 @@ export default function Admin() {
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/40" />
                   </div>
 
+                  {/* Additional Gallery Images */}
+                  <div className="md:col-span-2 p-4 bg-black/40 border border-white/10 rounded-xl">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div>
+                        <span className="text-xs font-mono text-gray-300 uppercase tracking-wider block">Additional Images (Gallery)</span>
+                        <span className="text-[11px] text-gray-500">Close-ups, side view, model shots… shown when a customer opens the T-shirt.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setProductForm({ ...productForm, images: [...(productForm.images || []), ""] })}
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white text-black rounded-lg text-xs font-bold hover:bg-gray-200"
+                      >
+                        <Plus size={14} /> Add Image
+                      </button>
+                    </div>
+
+                    {(productForm.images || []).length === 0 && (
+                      <p className="text-xs text-gray-500 py-2">No extra images yet. Click “Add Image” to add more photos of this T-shirt.</p>
+                    )}
+
+                    <div className="space-y-2">
+                      {(productForm.images || []).map((url, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-12 h-12 shrink-0 rounded-lg bg-black border border-white/10 overflow-hidden flex items-center justify-center">
+                            {url.trim() ? (
+                              <img src={url.trim()} alt={`Extra ${i + 1}`} className="w-full h-full object-contain" />
+                            ) : (
+                              <span className="text-[10px] text-gray-600">{i + 3}</span>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder={`https://... (Image ${i + 3})`}
+                            value={url}
+                            onChange={(e) => {
+                              const next = [...productForm.images];
+                              next[i] = e.target.value;
+                              setProductForm({ ...productForm, images: next });
+                            }}
+                            className="flex-1 min-w-0 px-3 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:border-white/40"
+                          />
+                          <button
+                            type="button"
+                            title="Remove image"
+                            aria-label={`Remove image ${i + 3}`}
+                            onClick={() => setProductForm({ ...productForm, images: productForm.images.filter((_, j) => j !== i) })}
+                            className="shrink-0 p-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Dual Image Preview Panel */}
                   {(productForm.image_url || productForm.secondary_image_url) && (
                     <div className="md:col-span-2 p-4 bg-black/40 border border-white/10 rounded-xl">
@@ -597,6 +652,12 @@ export default function Admin() {
                         {product.in_stock && <span className="px-2.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400">In Stock</span>}
                         {product.featured && <span className="px-2.5 py-0.5 rounded-full text-xs bg-yellow-500/20 text-yellow-400">Featured</span>}
                         {backImg && <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-white border border-white/20">Dual View</span>}
+                        {(() => {
+                          const total = new Set([frontImg, backImg, ...(product.images || [])].filter(Boolean)).size;
+                          return total > 2 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-sky-500/15 text-sky-300 border border-sky-500/30">{total} Photos</span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
 
@@ -609,7 +670,8 @@ export default function Admin() {
                           cross_price: (product.cross_price || product.original_price || "").toString(),
                           image_url: frontImg,
                           secondary_image_url: backImg,
-                          images: product.images || [frontImg, backImg].filter(Boolean),
+                          // Extra gallery images only — front/back have their own fields.
+                          images: (product.images || []).filter((u: string) => u && u !== frontImg && u !== backImg),
                           sizes: product.sizes || ["S", "M", "L", "XL", "XXL"],
                           in_stock: product.in_stock ?? true,
                           category: product.category || "anime",
