@@ -8,10 +8,8 @@ build
 
 # Environment files
 .env
-<<<<<<< Updated upstream
-.env.local
-.env.production.local
-.env.development.local
+.env.*
+!.env.example
 
 # IDE & System
 .DS_Store
@@ -19,9 +17,5 @@ build
 .vscode
 .idea
 
-=======
-.env.*
-!.env.example
->>>>>>> Stashed changes
 .vercel
 .vite
