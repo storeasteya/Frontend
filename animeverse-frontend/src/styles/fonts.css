@@ -1,0 +1,48 @@
+/* Abacaxi Latin VF (Variable Font) Typography Definition */
+@font-face {
+  font-family: 'Abacaxi Latin VF';
+  src: local('Abacaxi Latin VF'),
+       local('AbacaxiLatinVF'),
+       local('Abacaxi-Latin-VF'),
+       local('Abacaxi Latin Variable'),
+       local('Abacaxi Latin'),
+       local('Abacaxi'),
+       url('/fonts/AbacaxiLatinVF.woff2') format('woff2-variations'),
+       url('/fonts/AbacaxiLatinVF.woff2') format('woff2'),
+       url('/fonts/AbacaxiLatinVF.ttf') format('truetype');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Abacaxi';
+  src: local('Abacaxi Latin VF'),
+       local('AbacaxiLatinVF'),
+       local('Abacaxi-Latin-VF'),
+       local('Abacaxi Latin Variable'),
+       local('Abacaxi Latin'),
+       local('Abacaxi'),
+       url('/fonts/AbacaxiLatinVF.woff2') format('woff2-variations'),
+       url('/fonts/AbacaxiLatinVF.woff2') format('woff2'),
+       url('/fonts/AbacaxiLatinVF.ttf') format('truetype');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Abacaxi Latin';
+  src: local('Abacaxi Latin VF'),
+       local('AbacaxiLatinVF'),
+       local('Abacaxi-Latin-VF'),
+       local('Abacaxi Latin Variable'),
+       local('Abacaxi Latin'),
+       local('Abacaxi'),
+       url('/fonts/AbacaxiLatinVF.woff2') format('woff2-variations'),
+       url('/fonts/AbacaxiLatinVF.woff2') format('woff2'),
+       url('/fonts/AbacaxiLatinVF.ttf') format('truetype');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}

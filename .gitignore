@@ -8,6 +8,7 @@ build
 
 # Environment files
 .env
+<<<<<<< Updated upstream
 .env.local
 .env.production.local
 .env.development.local
@@ -18,5 +19,9 @@ build
 .vscode
 .idea
 
+=======
+.env.*
+!.env.example
+>>>>>>> Stashed changes
 .vercel
-.env*
+.vite
