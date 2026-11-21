@@ -176,7 +176,7 @@ export default function Home() {
             src="/assets/banner 2.png"
             alt="ASTEYA anime streetwear lookbook"
             loading="lazy"
-            className="block w-full h-auto"
+            className="block w-full "
           />
         </button>
       </section>
