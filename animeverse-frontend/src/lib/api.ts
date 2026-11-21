@@ -163,131 +163,60 @@ const defaultProducts = [
   }
 ];
 
-function getStoredProducts() {
-  const deletedIds: string[] = JSON.parse(localStorage.getItem('animeverse_deleted_product_ids') || '[]');
-  const local = localStorage.getItem('animeverse_products');
-  let productsList = defaultProducts;
-
-  if (local) {
-    try {
-      productsList = JSON.parse(local);
-    } catch (e) { }
-  } else {
-    localStorage.setItem('animeverse_products', JSON.stringify(defaultProducts));
-  }
-
-  if (Array.isArray(productsList)) {
-    productsList = productsList.filter((p: any) => {
-      const pId = p.id || p._id;
-      const pName = p.name ? p.name.toLowerCase() : '';
-      if (deletedIds.includes(pId)) return false;
-      if (deletedIds.some(deleted => pName && pName.includes(deleted.toLowerCase()))) return false;
-      return true;
-    });
-  }
-
-  return productsList;
-}
-
-function saveStoredProducts(products: any[]) {
-  localStorage.setItem('animeverse_products', JSON.stringify(products));
+// Read a JSON error message from a failed response.
+async function errorFrom(res: Response, fallback: string): Promise<Error> {
+  const body = await res.json().catch(() => ({} as any));
+  return new Error(body.error || `${fallback} (HTTP ${res.status})`);
 }
 
 // Products API
+// The backend is the single source of truth so admin changes are visible to every
+// customer. Demo products are shown only when the backend cannot be reached at all.
 export async function fetchProducts(filters: Record<string, any> = {}) {
   try {
     const query = new URLSearchParams(filters).toString();
-    const res = await fetch(`${API_URL}/products?${query}`);
+    const res = await fetch(`${API_URL}/products?${query}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (err) {
-    console.warn('Backend API unavailable, using stored products:', err);
+    console.warn('Backend API unavailable, showing demo products:', err);
   }
-  
-  let list = getStoredProducts();
+
+  let list = defaultProducts;
   if (filters.series) list = list.filter((p: any) => p.anime_series === filters.series);
   if (filters.featured === 'true' || filters.featured === true) list = list.filter((p: any) => p.featured);
   return list;
 }
 
 export async function createProduct(product: any) {
-  try {
-    const res = await fetch(`${API_URL}/products`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(product),
-    });
-    if (res.ok) return await res.json();
-  } catch (err) {
-    console.warn('Backend offline, creating locally:', err);
-  }
-
-  const list = getStoredProducts();
-  const newObj = {
-    id: 'prod-' + Date.now(),
-    _id: 'prod-' + Date.now(),
-    ...product,
-    in_stock: product.in_stock ?? true,
-    display_order: list.length + 1
-  };
-  list.unshift(newObj);
-  saveStoredProducts(list);
-  return newObj;
+  const res = await fetch(`${API_URL}/products`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(product),
+  });
+  if (!res.ok) throw await errorFrom(res, 'Could not create product');
+  return res.json();
 }
 
 export async function updateProduct(id: string, product: any) {
-  try {
-    const res = await fetch(`${API_URL}/products/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(product),
-    });
-    if (res.ok) return await res.json();
-  } catch (err) {
-    console.warn('Backend offline, updating locally:', err);
-  }
-
-  const list = getStoredProducts();
-  const idx = list.findIndex((p: any) => p.id === id || p._id === id);
-  if (idx !== -1) {
-    list[idx] = { ...list[idx], ...product };
-    saveStoredProducts(list);
-    return list[idx];
-  }
-  return product;
+  const res = await fetch(`${API_URL}/products/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(product),
+  });
+  if (!res.ok) throw await errorFrom(res, 'Could not update product');
+  return res.json();
 }
 
-export async function deleteProduct(id: string, name?: string) {
-  try {
-    if (id) {
-      await fetch(`${API_URL}/products/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-    }
-  } catch (err) {
-    console.warn('Backend offline, deleting locally:', err);
-  }
-
-  const deletedIds: string[] = JSON.parse(localStorage.getItem('animeverse_deleted_product_ids') || '[]');
-  if (id && !deletedIds.includes(id)) {
-    deletedIds.push(id);
-  }
-  if (name && !deletedIds.includes(name)) {
-    deletedIds.push(name);
-  }
-  localStorage.setItem('animeverse_deleted_product_ids', JSON.stringify(deletedIds));
-
-  let list = getStoredProducts();
-  list = list.filter((p: any) => {
-    if (id && (p.id === id || p._id === id)) return false;
-    if (name && p.name && p.name.toLowerCase() === name.toLowerCase()) return false;
-    return true;
+export async function deleteProduct(id: string, _name?: string) {
+  const res = await fetch(`${API_URL}/products/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
   });
-  saveStoredProducts(list);
-  return { success: true, id };
+  if (!res.ok) throw await errorFrom(res, 'Could not delete product');
+  return res.json();
 }
 
 // Admin Auth API
@@ -450,42 +379,22 @@ export async function fetchOrders() {
 }
 
 export async function updateOrderStatus(orderId: string, status: string) {
-  try {
-    const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({ status }),
-    });
-    if (res.ok) return await res.json();
-  } catch (err) {
-    console.warn('Backend updateOrderStatus fallback:', err);
-  }
-
-  const localOrders = JSON.parse(localStorage.getItem('animeverse_orders') || '[]');
-  const idx = localOrders.findIndex((o: any) => (o.id || o._id || o.order_id) === orderId);
-  if (idx !== -1) {
-    localOrders[idx].status = status;
-    localStorage.setItem('animeverse_orders', JSON.stringify(localOrders));
-    return localOrders[idx];
-  }
-  return { success: true, id: orderId, status };
+  const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw await errorFrom(res, 'Could not update order status');
+  return res.json();
 }
 
 export async function deleteOrder(orderId: string) {
-  try {
-    const res = await fetch(`${API_URL}/orders/${orderId}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (res.ok) return await res.json();
-  } catch (err) {
-    console.warn('Backend deleteOrder fallback:', err);
-  }
-
-  let localOrders = JSON.parse(localStorage.getItem('animeverse_orders') || '[]');
-  localOrders = localOrders.filter((o: any) => (o.id || o._id || o.order_id) !== orderId);
-  localStorage.setItem('animeverse_orders', JSON.stringify(localOrders));
-  return { success: true, id: orderId };
+  const res = await fetch(`${API_URL}/orders/${orderId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw await errorFrom(res, 'Could not delete order');
+  return res.json();
 }
 
 // Product Reviews API

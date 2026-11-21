@@ -117,7 +117,7 @@ export default function Home() {
   async function loadProducts() {
     try {
       const data = await apiFetchProducts();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setProducts(data);
         return;
       }
@@ -160,7 +160,7 @@ export default function Home() {
             className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
           >
             <source src="https://res.cloudinary.com/yvvwjri4/video/upload/v1795288382/asteya-intro-4k.mp4" type="video/mp4" />
-            <source src="https://res.cloudinary.com/yvvwjri4/video/upload/v1795288382/asteya-intro-4k.mp4" type="video/mp4" />
+            <source src="/assets/ASTEYA_Winter26_Intro.mp4" type="video/mp4" />
           </video>
         </div>
       </section>

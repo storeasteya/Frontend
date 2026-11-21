@@ -175,16 +175,13 @@ export default function Admin() {
 
     try {
       if (editingProduct) {
-        await apiUpdateProduct(editingProduct.id || (editingProduct as any)._id, data);
+        await apiUpdateProduct(editingProduct._id || editingProduct.id, data);
       } else {
         await apiCreateProduct(data);
       }
-    } catch (e) {
-      if (editingProduct) {
-        await supabase.from('products').update(data).eq('id', editingProduct.id);
-      } else {
-        await supabase.from('products').insert([data]);
-      }
+    } catch (e: any) {
+      alert(`Product was NOT saved: ${e.message}\n\nCheck that the backend server is running and VITE_API_URL points to it.`);
+      return;
     }
 
     resetProductForm();
@@ -192,38 +189,17 @@ export default function Admin() {
   }
 
   async function deleteProduct(product: Product | any) {
-    const targetId = typeof product === 'string' ? product : (product?.id || product?._id);
+    const targetId = typeof product === 'string' ? product : (product?._id || product?.id);
     const targetName = typeof product === 'object' ? product?.name : '';
 
     if (confirm(`Delete this product${targetName ? ` (${targetName})` : ''}?`)) {
       try {
         await apiDeleteProduct(targetId, targetName);
-      } catch (e) {
-        console.warn("apiDeleteProduct error:", e);
+      } catch (e: any) {
+        alert(`Product was NOT deleted: ${e.message}`);
+        return;
       }
-
-      try {
-        if (supabase) {
-          if (targetId) {
-            await supabase.from('products').delete().eq('id', targetId);
-            await supabase.from('products').delete().eq('_id', targetId);
-          }
-          if (targetName) {
-            await supabase.from('products').delete().ilike('name', `%${targetName}%`);
-          }
-        }
-      } catch (e) {
-        console.warn("supabase delete error:", e);
-      }
-
-      setProducts((prev) =>
-        prev.filter((p) => {
-          const pId = p.id || (p as any)._id;
-          if (targetId && pId === targetId) return false;
-          if (targetName && p.name && p.name.toLowerCase() === targetName.toLowerCase()) return false;
-          return true;
-        })
-      );
+      setProducts((prev) => prev.filter((p) => (p._id || p.id) !== targetId));
     }
   }
 
@@ -231,8 +207,9 @@ export default function Admin() {
     if (confirm(`Are you sure you want to delete order #${orderId}?`)) {
       try {
         await apiDeleteOrder(orderId);
-      } catch (err) {
-        console.warn('Delete order notice:', err);
+      } catch (err: any) {
+        alert(`Order was NOT deleted: ${err.message}`);
+        return;
       }
       setOrders(prev => prev.filter(o => (o._id || o.id || o.order_id) !== orderId));
     }
@@ -698,8 +675,9 @@ export default function Admin() {
                   async function updateOrderStatus(newStatus: string) {
                     try {
                       await apiUpdateOrderStatus(orderId, newStatus);
-                    } catch (err) {
-                      console.warn('Backend update order status error:', err);
+                    } catch (err: any) {
+                      alert(`Order status was NOT updated: ${err.message}`);
+                      return;
                     }
                     setOrders((prev: any[]) => prev.map(o => (o._id || o.id || o.order_id) === orderId ? { ...o, status: newStatus } : o));
                   }
