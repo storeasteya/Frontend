@@ -26,6 +26,16 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileMenuOpen]);
+
   const isAdminPage = location.pathname.startsWith("/admin");
 
   const navLinks = [
@@ -57,7 +67,7 @@ export function Header() {
     }
   }
 
-  const bgClass = isScrolled || isAdminPage
+  const bgClass = isScrolled || isAdminPage || mobileMenuOpen
     ? "bg-black/90 backdrop-blur-md shadow-lg"
     : "bg-transparent backdrop-blur-none";
 
@@ -68,13 +78,13 @@ export function Header() {
           {toastMessage}
         </div>
       )}
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between py-4">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between gap-2 h-16 sm:h-20">
 
           {/* Logo */}
-          <button onClick={() => handleNavClick("hero")} className="focus:outline-none">
+          <button onClick={() => handleNavClick("hero")} className="focus:outline-none shrink-0" aria-label="ASTEYA home">
             <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3">
-              <span className="font-display font-black text-2xl tracking-wider text-white uppercase select-none">
+              <span className="font-display font-black text-xl sm:text-2xl tracking-wider text-white uppercase select-none">
                 ASTEYA
               </span>
             </motion.div>
@@ -98,11 +108,11 @@ export function Header() {
 
           {/* Right Icons */}
           {!isAdminPage && (
-            <div className="flex items-center gap-3 lg:gap-5">
+            <div className="flex items-center gap-1 sm:gap-3 lg:gap-5 ml-auto lg:ml-0">
               <motion.button
                 onClick={() => navigate('/track')}
                 whileHover={{ y: -2 }}
-                className="flex items-center gap-1.5 text-white hover:text-gray-300 font-medium text-base transition-colors focus:outline-none min-h-[44px]"
+                className="hidden lg:flex items-center gap-1.5 text-white hover:text-gray-300 font-medium text-base transition-colors focus:outline-none min-h-[44px]"
                 title="Track Order"
               >
                 <Truck size={18} className="text-white" />
@@ -113,12 +123,13 @@ export function Header() {
                 onClick={() => navigate('/cart')}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="relative text-white p-2"
+                className="relative text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="View Cart"
+                aria-label={cartCount > 0 ? `View cart (${cartCount} items)` : "View cart"}
               >
-                <ShoppingBag size={24} />
+                <ShoppingBag size={22} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-black text-xs rounded-full flex items-center justify-center font-black animate-pulse">
+                  <span className="absolute top-0.5 right-0.5 w-5 h-5 bg-emerald-500 text-black text-xs rounded-full flex items-center justify-center font-black animate-pulse">
                     {cartCount}
                   </span>
                 )}
@@ -126,9 +137,11 @@ export function Header() {
 
               {/* User Authentication Menu */}
               {user ? (
-                <div className="relative">
+                <div className="relative hidden sm:block">
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    aria-label="Account menu"
+                    aria-expanded={userDropdownOpen}
                     className="flex items-center gap-2.5 p-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full transition-colors"
                   >
                     {user.picture ? (
@@ -176,7 +189,7 @@ export function Header() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={openAuthModal}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-xs shadow-lg transition-all uppercase tracking-wider min-h-[44px]"
+                  className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-xs shadow-lg transition-all uppercase tracking-wider min-h-[44px]"
                 >
                   <User size={16} className="text-black fill-black" />
                   <span>Sign In</span>
@@ -193,8 +206,13 @@ export function Header() {
 
           {/* Mobile Toggle */}
           {!isAdminPage && (
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
-              {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              className="lg:hidden text-white p-2 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
+              {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
           )}
         </div>
@@ -205,7 +223,7 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden pb-6 border-t border-white/10 pt-4 bg-black/95 rounded-b-2xl px-4 flex flex-col gap-3"
+            className="lg:hidden overflow-y-auto max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] pb-6 border-t border-white/10 pt-2 flex flex-col"
           >
             {navLinks.map((link) => (
               <button
@@ -217,10 +235,45 @@ export function Header() {
               </button>
             ))}
 
-            {!user && (
+            <button
+              onClick={() => { setMobileMenuOpen(false); navigate("/track"); }}
+              className="text-left text-base font-medium text-white hover:text-gray-300 transition-colors py-3 border-b border-white/5 min-h-[44px] flex items-center gap-2"
+            >
+              <Truck size={18} /> Track Order
+            </button>
+
+            {user ? (
+              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-1">
+                <div className="flex items-center gap-3 pb-3">
+                  {user.picture ? (
+                    <img src={user.picture} alt={user.name} className="w-9 h-9 rounded-full object-cover border border-white/40" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center font-bold text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); navigate("/track"); }}
+                  className="text-left text-sm font-semibold text-white py-3 min-h-[44px] flex items-center gap-2"
+                >
+                  <Package size={16} /> My Orders & Live Tracking
+                </button>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); logout(); }}
+                  className="text-left text-sm font-semibold text-red-400 py-3 min-h-[44px] flex items-center gap-2"
+                >
+                  <LogOut size={16} /> Sign Out
+                </button>
+              </div>
+            ) : (
               <button
                 onClick={() => { setMobileMenuOpen(false); openAuthModal(); }}
-                className="flex items-center justify-center gap-2.5 py-3 px-5 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-sm shadow-lg my-2 uppercase tracking-wider min-h-[44px]"
+                className="sm:hidden flex items-center justify-center gap-2.5 py-3 px-5 bg-white text-black hover:bg-gray-200 font-bold rounded-full text-sm shadow-lg mt-5 uppercase tracking-wider min-h-[44px]"
               >
                 <User size={18} className="text-black fill-black" />
                 <span>Sign In</span>

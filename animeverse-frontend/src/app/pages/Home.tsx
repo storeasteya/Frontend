@@ -151,14 +151,15 @@ export default function Home() {
       <section id="hero" className="relative w-full bg-black overflow-hidden pt-16 sm:pt-20">
         <div className="relative w-full aspect-video md:aspect-[21/9] lg:min-h-[85vh] xl:min-h-[90vh] max-h-[92vh] flex items-center justify-center bg-black overflow-hidden">
           <video
-            src="/assets/ASTEYA_Winter26_Intro.mp4"
             autoPlay
             loop
             muted
             playsInline
             preload="auto"
-            className="w-full h-full object-cover object-center pointer-events-none"
+            aria-label="ASTEYA intro video"
+            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
           >
+            <source src="/assets/asteya-intro-4k.mp4" type="video/mp4" />
             <source src="/assets/ASTEYA_Winter26_Intro.mp4" type="video/mp4" />
           </video>
         </div>
